@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a1a2e"/>
+  <!-- Sun rays -->
+  <g stroke="#f0a500" stroke-width="14" stroke-linecap="round">
+    <line x1="256" y1="48" x2="256" y2="90"/>
+    <line x1="256" y1="290" x2="256" y2="332"/>
+    <line x1="48" y1="166" x2="90" y2="166"/>
+    <line x1="422" y1="166" x2="464" y2="166"/>
+    <line x1="96" y1="58" x2="126" y2="88"/>
+    <line x1="386" y1="58" x2="416" y2="88"/>
+    <line x1="96" y1="274" x2="126" y2="244"/>
+    <line x1="386" y1="274" x2="416" y2="244"/>
+  </g>
+  <!-- Sun circle -->
+  <circle cx="256" cy="166" r="76" fill="#f0a500"/>
+  <!-- Beer mug -->
+  <rect x="180" y="315" width="96" height="118" rx="10" fill="#f0a500"/>
+  <rect x="276" y="336" width="38" height="60" rx="19" fill="none" stroke="#f0a500" stroke-width="13"/>
+  <!-- Foam -->
+  <ellipse cx="228" cy="315" rx="48" ry="20" fill="white"/>
+  <!-- Text -->
+  <text x="256" y="490" font-family="Arial Black, sans-serif" font-size="42" font-weight="900" fill="#f0a500" text-anchor="middle">MALAGA</text>
+</svg>

@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Malaga 2026">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Malaga 2026</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --card: #0f3460;
+      --accent: #f0a500;
+      --accent-dim: #c98a00;
+      --text: #ffffff;
+      --text-muted: #8899bb;
+      --positive: #48bb78;
+      --negative: #fc8181;
+      --border: #1e3a5f;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── SPLASH / NIMEN VALINTA ── */
+    #splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 32px 24px;
+      text-align: center;
+      background: radial-gradient(ellipse at top, #0f3460 0%, #1a1a2e 65%);
+    }
+
+    .splash-sun {
+      font-size: 72px;
+      margin-bottom: 8px;
+      animation: pulse-sun 3s ease-in-out infinite;
+    }
+    @keyframes pulse-sun {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .splash-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 56px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .splash-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .splash-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .splash-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .splash-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    select, input[type="text"], input[type="number"], input[type="date"] {
+      width: 100%;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus, input:focus { border-color: var(--accent); }
+    select option { background: var(--card); }
+
+    .select-wrap {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent);
+      pointer-events: none;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .btn:active { transform: scale(0.97); opacity: 0.85; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #1a1a2e;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--negative);
+      border: 1px solid var(--negative);
+      font-size: 13px;
+      padding: 8px;
+      width: auto;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      font-size: 14px;
+      padding: 10px;
+    }
+
+    /* ── SOVELLUS ── */
+    #app { display: none; flex-direction: column; min-height: 100dvh; }
+
+    /* Yläpalkki */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+    .header-user {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .user-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .btn-change-user {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+      transition: color 0.15s;
+    }
+    .btn-change-user:hover { color: var(--accent); }
+
+    /* Pääsisältö */
+    main {
+      flex: 1;
+      padding: 16px;
+      padding-bottom: 88px;
+      overflow-y: auto;
+    }
+
+    /* Yhteenveto-kortit */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+    }
+    .summary-card.is-me {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, #0f3460, #1a2f50);
+    }
+    .summary-name {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .me-badge {
+      background: var(--accent);
+      color: #1a1a2e;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+    .summary-amount {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .summary-amount span {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* Kulusyöttöosio */
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Split-valinta */
+    .split-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .split-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+    .split-btn.active {
+      background: var(--accent);
+      color: #1a1a2e;
+      border-color: var(--accent);
+    }
+
+    .checkboxes {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .checkboxes.visible { display: grid; }
+
+    .cb-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: border-color 0.15s;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--text);
+      margin-bottom: 0;
+    }
+    .cb-label:has(input:checked) {
+      border-color: var(--accent);
+      background: #1a2f50;
+    }
+    .cb-label input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+    /* Kulujen lista */
+    .expenses-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .expense-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .expense-item.mine { border-left: 3px solid var(--accent); }
+
+    .expense-main { flex: 1; min-width: 0; }
+    .expense-desc {
+      font-weight: 600;
+      font-size: 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .expense-desc.no-desc { color: var(--text-muted); font-style: italic; font-weight: 400; }
+    .expense-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+    }
+    .split-tag {
+      background: var(--card);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 11px;
+    }
+
+    .expense-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .expense-amount {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state p:first-child { font-size: 32px; margin-bottom: 8px; }
+
+    /* Offline-banneri */
+    #offline-banner {
+      display: none;
+      background: #7c3b00;
+      color: #ffd580;
+      text-align: center;
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    /* Lataustila */
+    #loading-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Alareuna-nappi */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 12px 16px;
+      background: linear-gradient(to top, var(--bg) 60%, transparent);
+      z-index: 10;
+    }
+    .btn-settlement {
+      background: var(--accent);
+      color: #1a1a2e;
+      border: none;
+      border-radius: var(--radius-sm);
+      width: 100%;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 700;
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-settlement:active { transform: scale(0.97); opacity: 0.85; }
+
+    /* ── MODAALIT ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 50;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      padding: 24px 20px 32px;
+      animation: slide-up 0.25s ease;
+    }
+    @keyframes slide-up {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+    .btn-close {
+      background: var(--card);
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+    .btn-close:hover { color: var(--text); }
+
+    /* Loppulaskelma */
+    .settlement-intro {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .settlement-totals {
+      background: var(--card);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+    .settlement-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .settlement-total-row:last-child { border-bottom: none; }
+    .balance-positive { color: var(--positive); font-weight: 600; }
+    .balance-negative { color: var(--negative); font-weight: 600; }
+    .balance-zero { color: var(--text-muted); }
+
+    .transactions-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .transaction-item {
+      background: var(--card);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .tx-from { font-weight: 700; color: var(--negative); }
+    .tx-arrow { color: var(--text-muted); font-size: 18px; }
+    .tx-to { font-weight: 700; color: var(--positive); }
+    .tx-amount {
+      margin-left: auto;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .all-clear {
+      text-align: center;
+      padding: 24px;
+      font-size: 40px;
+    }
+    .all-clear p { color: var(--positive); font-weight: 600; margin-top: 8px; }
+
+    /* Vahvistus-dialogi */
+    .confirm-modal .modal {
+      border-radius: var(--radius);
+      margin: auto;
+      max-width: 320px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SPLASH: Nimen valinta -->
+<div id="splash">
+  <div class="splash-sun">☀️</div>
+  <div class="splash-title">MALAGA 2026</div>
+  <div class="splash-sub">Poikien reissu 🍺</div>
+  <div class="splash-card">
+    <h2>Kuka olet?</h2>
+    <p>Valitse nimesi. Sovellus muistaa sinut jatkossa.</p>
+    <div class="select-wrap">
+      <select id="name-select">
+        <option value="">— Valitse nimi —</option>
+        <option value="Timppa">Timppa</option>
+        <option value="Matti">Matti</option>
+        <option value="Petteri">Petteri</option>
+        <option value="Tatu">Tatu</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="btn-join">OLEN MUKANA! 🤙</button>
+  </div>
+</div>
+
+<!-- PÄÄSOVELLUS -->
+<div id="app">
+
+  <div id="offline-banner">📵 Offline — muutokset eivät tallennu</div>
+
+  <header>
+    <div class="header-title">MALAGA 2026 🌞</div>
+    <div class="header-user">
+      <span class="user-dot"></span>
+      <span id="header-username"></span>
+      <button class="btn-change-user" id="btn-change-user" title="Vaihda käyttäjä">✎</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Yhteenveto -->
+    <div class="section-title">MAKSETTU YHTEENSÄ</div>
+    <div class="summary-grid" id="summary-grid">
+      <!-- Täytetään JS:llä -->
+    </div>
+
+    <!-- Kulusyöttö -->
+    <div class="section-title">LISÄÄ KULU</div>
+    <div class="form-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="input-amount">Summa (€) *</label>
+          <input type="number" id="input-amount" placeholder="0.00" min="0.01" step="0.01" inputmode="decimal">
+        </div>
+        <div class="form-group">
+          <label for="input-date">Päivämäärä</label>
+          <input type="date" id="input-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="input-desc">Selite (vapaaehtoinen)</label>
+        <input type="text" id="input-desc" placeholder="esim. Ravintola El Patio 🥘">
+      </div>
+      <div class="form-group">
+        <label>Jaetaan</label>
+        <div class="split-toggle">
+          <button class="split-btn active" id="split-all-btn" onclick="setSplitAll()">Kaikille</button>
+          <button class="split-btn" id="split-custom-btn" onclick="setSplitCustom()">Valituille</button>
+        </div>
+        <div class="checkboxes" id="split-checkboxes">
+          <label class="cb-label"><input type="checkbox" value="Timppa" checked> Timppa</label>
+          <label class="cb-label"><input type="checkbox" value="Matti" checked> Matti</label>
+          <label class="cb-label"><input type="checkbox" value="Petteri" checked> Petteri</label>
+          <label class="cb-label"><input type="checkbox" value="Tatu" checked> Tatu</label>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-add-expense">+ LISÄÄ KULU</button>
+    </div>
+
+    <!-- Kulujen lista -->
+    <div class="section-title">KULUT</div>
+    <div id="loading-state">
+      <div class="spinner"></div>
+      <p>Ladataan...</p>
+    </div>
+    <div class="expenses-list" id="expenses-list" style="display:none;"></div>
+  </main>
+
+  <!-- Alareuna: loppulaskelma-nappi -->
+  <div class="bottom-bar">
+    <button class="btn-settlement" id="btn-settlement">🧮 LOPPULASKELMA</button>
+  </div>
+
+</div>
+
+<!-- MODAALI: Loppulaskelma -->
+<div class="modal-overlay" id="modal-settlement">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🧮 LOPPULASKELMA</div>
+      <button class="btn-close" onclick="closeModal('modal-settlement')">✕</button>
+    </div>
+    <p class="settlement-intro">Näin tilit menevät selväksi. Kaikkien kokonaiskulut ja tarvittavat tilisiirrot.</p>
+    <div class="settlement-totals" id="settlement-totals"></div>
+    <div class="transactions-title">TARVITTAVAT SIIRROT</div>
+    <div id="settlement-transactions"></div>
+  </div>
+</div>
+
+<!-- MODAALI: Vahvistus poisto -->
+<div class="modal-overlay confirm-modal" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⚠️ POISTETAANKO?</div>
+      <button class="btn-close" onclick="closeModal('modal-confirm')">✕</button>
+    </div>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">Haluatko varmasti poistaa tämän kulun? Toimintoa ei voi peruuttaa.</p>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirm')" style="flex:1">Peruuta</button>
+      <button class="btn btn-primary" id="btn-confirm-delete" style="flex:1;background:var(--negative);color:#fff;">Poista</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getDatabase, ref, push, onValue, remove, serverTimestamp }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+  // ─────────────────────────────────────────────────────
+  // VAIHDA NÄMÄ OMILLA FIREBASE-ARVOILLASI:
+  const firebaseConfig = {
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT.firebaseapp.com",
+    databaseURL:       "https://YOUR_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId:             "YOUR_APP_ID"
+  };
+  // ─────────────────────────────────────────────────────
+
+  const USERS = ['Timppa', 'Matti', 'Petteri', 'Tatu'];
+  const ADMIN = 'Timppa';
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  let currentUser = null;
+  let allExpenses = {};   // { id: expenseObj }
+  let pendingDeleteId = null;
+
+  // ── Offline ─────────────────────────────────────────
+  window.addEventListener('online',  () => { document.getElementById('offline-banner').style.display = 'none'; });
+  window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
+
+  // ── Tunnistus ────────────────────────────────────────
+  function initUser() {
+    const saved = localStorage.getItem('malaga_user');
+    if (saved && USERS.includes(saved)) {
+      currentUser = saved;
+      showApp();
+    } else {
+      document.getElementById('splash').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    initUser();
+    setTodayDate();
+    bindEvents();
+  });
+
+  function showApp() {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('header-username').textContent = currentUser;
+    loadExpenses();
+    renderSummary();
+  }
+
+  function setTodayDate() {
+    const d = new Date();
+    const iso = d.toISOString().slice(0, 10);
+    document.getElementById('input-date').value = iso;
+  }
+
+  function bindEvents() {
+    document.getElementById('btn-join').addEventListener('click', () => {
+      const sel = document.getElementById('name-select').value;
+      if (!sel) { alert('Valitse ensin nimesi!'); return; }
+      currentUser = sel;
+      localStorage.setItem('malaga_user', sel);
+      showApp();
+    });
+
+    document.getElementById('btn-change-user').addEventListener('click', () => {
+      if (!confirm('Vaihda käyttäjä?')) return;
+      localStorage.removeItem('malaga_user');
+      currentUser = null;
+      document.getElementById('splash').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('name-select').value = '';
+    });
+
+    document.getElementById('btn-add-expense').addEventListener('click', addExpense);
+
+    document.getElementById('input-amount').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addExpense();
+    });
+
+    document.getElementById('btn-settlement').addEventListener('click', showSettlement);
+
+    document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+      if (pendingDeleteId) {
+        remove(ref(db, 'expenses/' + pendingDeleteId));
+        pendingDeleteId = null;
+      }
+      closeModal('modal-confirm');
+    });
+  }
+
+  // ── Split-valinta ─────────────────────────────────────
+  window.setSplitAll = function() {
+    document.getElementById('split-all-btn').classList.add('active');
+    document.getElementById('split-custom-btn').classList.remove('active');
+    document.getElementById('split-checkboxes').classList.remove('visible');
+  };
+  window.setSplitCustom = function() {
+    document.getElementById('split-custom-btn').classList.add('active');
+    document.getElementById('split-all-btn').classList.remove('active');
+    document.getElementById('split-checkboxes').classList.add('visible');
+  };
+
+  function getSelectedSplit() {
+    if (!document.getElementById('split-custom-btn').classList.contains('active')) {
+      return [...USERS];
+    }
+    const checked = [...document.querySelectorAll('#split-checkboxes input:checked')];
+    return checked.map(cb => cb.value);
+  }
+
+  // ── Lisää kulu ────────────────────────────────────────
+  async function addExpense() {
+    const amountRaw = parseFloat(document.getElementById('input-amount').value);
+    const desc  = document.getElementById('input-desc').value.trim();
+    const date  = document.getElementById('input-date').value;
+    const split = getSelectedSplit();
+
+    if (!amountRaw || amountRaw <= 0) {
+      alert('Syötä summa!'); return;
+    }
+    if (split.length === 0) {
+      alert('Valitse vähintään yksi henkilö!'); return;
+    }
+
+    const expense = {
+      paidBy: currentUser,
+      amount: Math.round(amountRaw * 100) / 100,
+      description: desc || '',
+      date: date || new Date().toISOString().slice(0,10),
+      splitBetween: split,
+      createdAt: Date.now()
+    };
+
+    try {
+      await push(ref(db, 'expenses'), expense);
+      document.getElementById('input-amount').value = '';
+      document.getElementById('input-desc').value = '';
+      setTodayDate();
+      setSplitAll();
+    } catch (e) {
+      alert('Tallennus epäonnistui. Tarkista verkko.');
+    }
+  }
+
+  // ── Firebase: kuuntele kuluja ─────────────────────────
+  function loadExpenses() {
+    onValue(ref(db, 'expenses'), snapshot => {
+      allExpenses = snapshot.val() || {};
+      renderExpenses();
+      renderSummary();
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('expenses-list').style.display = 'flex';
+    });
+  }
+
+  // ── Renderöi kulut ────────────────────────────────────
+  function renderExpenses() {
+    const list = document.getElementById('expenses-list');
+    const sorted = Object.entries(allExpenses)
+      .sort(([,a],[,b]) => (b.createdAt||0) - (a.createdAt||0));
+
+    if (sorted.length === 0) {
+      list.innerHTML = `<div class="empty-state"><p>🏖️</p><p>Ei kuluja vielä.<br>Lisää ensimmäinen!</p></div>`;
+      return;
+    }
+
+    list.innerHTML = sorted.map(([id, e]) => {
+      const canDelete = currentUser === ADMIN || e.paidBy === currentUser;
+      const isMine = e.paidBy === currentUser;
+      const desc = e.description
+        ? `<span class="expense-desc">${escHtml(e.description)}</span>`
+        : `<span class="expense-desc no-desc">— ei selitettä —</span>`;
+      const splitInfo = e.splitBetween.length === USERS.length
+        ? 'Kaikki'
+        : e.splitBetween.join(', ');
+      const share = (e.amount / e.splitBetween.length).toFixed(2);
+
+      return `
+        <div class="expense-item${isMine ? ' mine' : ''}">
+          <div class="expense-main">
+            ${desc}
+            <div class="expense-meta">
+              <span>👤 ${escHtml(e.paidBy)}</span>
+              <span>📅 ${formatDate(e.date)}</span>
+              <span class="split-tag">÷ ${escHtml(splitInfo)} (${share}€/hlö)</span>
+            </div>
+          </div>
+          <div class="expense-right">
+            <span class="expense-amount">${formatEur(e.amount)}</span>
+            ${canDelete
+              ? `<button class="btn btn-danger" onclick="confirmDelete('${id}')">🗑</button>`
+              : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Renderöi yhteenveto ───────────────────────────────
+  function renderSummary() {
+    const totals = {};
+    USERS.forEach(u => totals[u] = 0);
+
+    Object.values(allExpenses).forEach(e => {
+      totals[e.paidBy] = (totals[e.paidBy] || 0) + e.amount;
+    });
+
+    const grid = document.getElementById('summary-grid');
+    grid.innerHTML = USERS.map(name => {
+      const isMe = name === currentUser;
+      return `
+        <div class="summary-card${isMe ? ' is-me' : ''}">
+          <div class="summary-name">
+            ${escHtml(name)}
+            ${isMe ? '<span class="me-badge">sinä</span>' : ''}
+          </div>
+          <div class="summary-amount">${formatEur(totals[name])} <span>maksettu</span></div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Loppulaskelma ─────────────────────────────────────
+  function showSettlement() {
+    const expenses = Object.values(allExpenses);
+
+    // Laske nettosaldot
+    const balances = {};
+    USERS.forEach(u => balances[u] = 0);
+
+    expenses.forEach(e => {
+      balances[e.paidBy] += e.amount;
+      const share = e.amount / e.splitBetween.length;
+      e.splitBetween.forEach(p => { balances[p] -= share; });
+    });
+
+    // Totals-taulukko
+    const totalAll = expenses.reduce((s, e) => s + e.amount, 0);
+    document.getElementById('settlement-totals').innerHTML = `
+      <div class="settlement-total-row" style="font-weight:700;border-bottom:2px solid var(--border)">
+        <span>Kulut yhteensä</span><span style="color:var(--accent);font-size:18px;">${formatEur(totalAll)}</span>
+      </div>
+      ${USERS.map(u => {
+        const bal = Math.round(balances[u] * 100) / 100;
+        const cls = bal > 0.01 ? 'balance-positive' : bal < -0.01 ? 'balance-negative' : 'balance-zero';
+        const sign = bal > 0.01 ? '+' : '';
+        return `<div class="settlement-total-row">
+          <span>${escHtml(u)}</span>
+          <span class="${cls}">${sign}${formatEur(bal)}</span>
+        </div>`;
+      }).join('')}`;
+
+    // Laske siirrot (greedy)
+    const transactions = calcTransactions(balances);
+
+    const txDiv = document.getElementById('settlement-transactions');
+    if (transactions.length === 0) {
+      txDiv.innerHTML = `<div class="all-clear"><div>🎉</div><p>Kaikki tilit selvillä!</p></div>`;
+    } else {
+      txDiv.innerHTML = transactions.map(tx => `
+        <div class="transaction-item">
+          <span class="tx-from">${escHtml(tx.from)}</span>
+          <span class="tx-arrow">→</span>
+          <span class="tx-to">${escHtml(tx.to)}</span>
+          <span class="tx-amount">${formatEur(tx.amount)}</span>
+        </div>`).join('');
+    }
+
+    openModal('modal-settlement');
+  }
+
+  function calcTransactions(balances) {
+    const eps = 0.01;
+    const debtors   = USERS.filter(u => balances[u] < -eps).map(u => ({name: u, amt: balances[u]}));
+    const creditors = USERS.filter(u => balances[u] >  eps).map(u => ({name: u, amt: balances[u]}));
+
+    debtors.sort((a,b)   => a.amt - b.amt);
+    creditors.sort((a,b) => b.amt - a.amt);
+
+    const txs = [];
+    let i = 0, j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const pay = Math.min(-debtors[i].amt, creditors[j].amt);
+      txs.push({ from: debtors[i].name, to: creditors[j].name, amount: Math.round(pay * 100) / 100 });
+      debtors[i].amt   += pay;
+      creditors[j].amt -= pay;
+      if (Math.abs(debtors[i].amt)   < eps) i++;
+      if (Math.abs(creditors[j].amt) < eps) j++;
+    }
+    return txs;
+  }
+
+  // ── Poisto ────────────────────────────────────────────
+  window.confirmDelete = function(id) {
+    pendingDeleteId = id;
+    openModal('modal-confirm');
+  };
+
+  // ── Modaalit ─────────────────────────────────────────
+  window.openModal  = function(id) { document.getElementById(id).classList.add('open'); };
+  window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+
+  // Sulje modaali taustaklikkaus
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
+  });
+
+  // ── Apufunktiot ───────────────────────────────────────
+  function formatEur(n) {
+    return (n || 0).toLocaleString('fi-FI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  }
+  function formatDate(d) {
+    if (!d) return '';
+    const [y,m,day] = d.split('-');
+    return `${day}.${m}.${y}`;
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+
+<script>
+  // Service worker -rekisteröinti
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
