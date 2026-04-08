@@ -592,6 +592,36 @@
       margin: auto;
       max-width: 320px;
     }
+
+    /* Oma jako */
+    #split-type-toggle { margin-top: 8px; }
+    #custom-amounts { margin-top: 10px; }
+    .custom-amount-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .custom-amount-row:last-child { margin-bottom: 0; }
+    .custom-amount-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .custom-amount-input {
+      width: 110px;
+      flex-shrink: 0;
+      margin-bottom: 0 !important;
+    }
+    .custom-amount-remainder {
+      width: 110px;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .remainder-ok   { color: var(--text); }
+    .remainder-neg  { color: var(--negative); }
   </style>
 </head>
 <body>
@@ -667,6 +697,11 @@
           <label class="cb-label"><input type="checkbox" value="Petteri" checked> Petteri</label>
           <label class="cb-label"><input type="checkbox" value="Tatu" checked> Tatu</label>
         </div>
+        <div class="split-toggle" id="split-type-toggle">
+          <button class="split-btn active" id="split-equal-btn" onclick="setSplitEqual()">Tasan</button>
+          <button class="split-btn" id="split-unequal-btn" onclick="setSplitUnequal()">Oma jako</button>
+        </div>
+        <div id="custom-amounts"></div>
       </div>
       <button class="btn btn-primary" id="btn-add-expense">+ LISÄÄ KULU</button>
     </div>
@@ -744,6 +779,7 @@
   let currentUser = null;
   let allExpenses = {};   // { id: expenseObj }
   let pendingDeleteId = null;
+  let splitMode = 'equal'; // 'equal' | 'custom'
 
   // ── Offline ─────────────────────────────────────────
   window.addEventListener('online',  () => { document.getElementById('offline-banner').style.display = 'none'; });
@@ -805,6 +841,14 @@
       if (e.key === 'Enter') addExpense();
     });
 
+    document.getElementById('input-amount').addEventListener('input', () => {
+      if (splitMode === 'custom') updateRemainder();
+    });
+
+    document.getElementById('split-checkboxes').addEventListener('change', () => {
+      if (splitMode === 'custom') renderCustomAmounts();
+    });
+
     document.getElementById('btn-settlement').addEventListener('click', showSettlement);
 
     document.getElementById('btn-confirm-delete').addEventListener('click', () => {
@@ -821,12 +865,88 @@
     document.getElementById('split-all-btn').classList.add('active');
     document.getElementById('split-custom-btn').classList.remove('active');
     document.getElementById('split-checkboxes').classList.remove('visible');
+    if (splitMode === 'custom') renderCustomAmounts();
   };
   window.setSplitCustom = function() {
     document.getElementById('split-custom-btn').classList.add('active');
     document.getElementById('split-all-btn').classList.remove('active');
     document.getElementById('split-checkboxes').classList.add('visible');
+    if (splitMode === 'custom') renderCustomAmounts();
   };
+
+  window.setSplitEqual = function() {
+    splitMode = 'equal';
+    document.getElementById('split-equal-btn').classList.add('active');
+    document.getElementById('split-unequal-btn').classList.remove('active');
+    document.getElementById('custom-amounts').innerHTML = '';
+  };
+  window.setSplitUnequal = function() {
+    splitMode = 'custom';
+    document.getElementById('split-unequal-btn').classList.add('active');
+    document.getElementById('split-equal-btn').classList.remove('active');
+    renderCustomAmounts();
+  };
+
+  function renderCustomAmounts() {
+    const users = getSelectedSplit();
+    const container = document.getElementById('custom-amounts');
+
+    // Säilytä olemassa olevat arvot
+    const prev = {};
+    container.querySelectorAll('.custom-amount-input').forEach(inp => {
+      prev[inp.dataset.user] = inp.value;
+    });
+
+    container.innerHTML = users.map((user, i) => {
+      const isLast = i === users.length - 1;
+      if (isLast) {
+        return `<div class="custom-amount-row">
+          <span class="custom-amount-name">${escHtml(user)}</span>
+          <span class="custom-amount-remainder remainder-ok" id="remainder-display">—</span>
+        </div>`;
+      }
+      const val = prev[user] !== undefined ? prev[user] : '';
+      return `<div class="custom-amount-row">
+        <span class="custom-amount-name">${escHtml(user)}</span>
+        <input type="number" class="custom-amount-input" data-user="${escHtml(user)}"
+          value="${val}" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+      </div>`;
+    }).join('');
+
+    updateRemainder();
+
+    container.querySelectorAll('.custom-amount-input').forEach(inp => {
+      inp.addEventListener('input', updateRemainder);
+    });
+  }
+
+  function updateRemainder() {
+    const total = Math.round((parseFloat(document.getElementById('input-amount').value) || 0) * 100) / 100;
+    let sumOthers = 0;
+    document.querySelectorAll('.custom-amount-input').forEach(inp => {
+      sumOthers += parseFloat(inp.value) || 0;
+    });
+    const remainder = Math.round((total - sumOthers) * 100) / 100;
+    const el = document.getElementById('remainder-display');
+    if (!el) return;
+    el.textContent = remainder.toLocaleString('fi-FI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    el.className = 'custom-amount-remainder ' + (remainder < -0.005 ? 'remainder-neg' : 'remainder-ok');
+  }
+
+  function getCustomSplit() {
+    const users = getSelectedSplit();
+    const result = {};
+    let sumOthers = 0;
+    document.querySelectorAll('.custom-amount-input').forEach(inp => {
+      const val = Math.round((parseFloat(inp.value) || 0) * 100) / 100;
+      result[inp.dataset.user] = val;
+      sumOthers += val;
+    });
+    const total = Math.round((parseFloat(document.getElementById('input-amount').value) || 0) * 100) / 100;
+    const lastUser = users[users.length - 1];
+    result[lastUser] = Math.round((total - sumOthers) * 100) / 100;
+    return result;
+  }
 
   function getSelectedSplit() {
     if (!document.getElementById('split-custom-btn').classList.contains('active')) {
@@ -850,6 +970,21 @@
       alert('Valitse vähintään yksi henkilö!'); return;
     }
 
+    let customSplit = null;
+    if (splitMode === 'custom' && split.length > 1) {
+      customSplit = getCustomSplit();
+      const splitTotal = Object.values(customSplit).reduce((s, v) => s + v, 0);
+      const total = Math.round(amountRaw * 100) / 100;
+      if (Math.abs(total - Math.round(splitTotal * 100) / 100) > 0.02) {
+        alert('Summien täytyy olla yhteensä ' + total.toFixed(2).replace('.', ',') + ' €!');
+        return;
+      }
+      if (Object.values(customSplit).some(v => v < 0)) {
+        alert('Summat eivät voi olla negatiivisia!');
+        return;
+      }
+    }
+
     const expense = {
       paidBy: currentUser,
       amount: Math.round(amountRaw * 100) / 100,
@@ -858,6 +993,7 @@
       splitBetween: split,
       createdAt: Date.now()
     };
+    if (customSplit) expense.customSplit = customSplit;
 
     try {
       await push(ref(db, 'expenses'), expense);
@@ -865,6 +1001,7 @@
       document.getElementById('input-desc').value = '';
       setTodayDate();
       setSplitAll();
+      setSplitEqual();
     } catch (e) {
       alert('Tallennus epäonnistui. Tarkista verkko.');
     }
@@ -898,10 +1035,17 @@
       const desc = e.description
         ? `<span class="expense-desc">${escHtml(e.description)}</span>`
         : `<span class="expense-desc no-desc">— ei selitettä —</span>`;
-      const splitInfo = e.splitBetween.length === USERS.length
-        ? 'Kaikki'
-        : e.splitBetween.join(', ');
-      const share = (e.amount / e.splitBetween.length).toFixed(2);
+      let splitTag;
+      if (e.customSplit) {
+        const parts = e.splitBetween.map(p =>
+          `${escHtml(p)}\u00a0${(e.customSplit[p] || 0).toLocaleString('fi-FI', {minimumFractionDigits: 2, maximumFractionDigits: 2})}€`
+        ).join(', ');
+        splitTag = `<span class="split-tag">÷ ${parts}</span>`;
+      } else {
+        const splitInfo = e.splitBetween.length === USERS.length ? 'Kaikki' : e.splitBetween.join(', ');
+        const share = (e.amount / e.splitBetween.length).toFixed(2);
+        splitTag = `<span class="split-tag">÷ ${escHtml(splitInfo)} (${share}€/hlö)</span>`;
+      }
 
       return `
         <div class="expense-item${isMine ? ' mine' : ''}">
@@ -910,7 +1054,7 @@
             <div class="expense-meta">
               <span>👤 ${escHtml(e.paidBy)}</span>
               <span>📅 ${formatDate(e.date)}</span>
-              <span class="split-tag">÷ ${escHtml(splitInfo)} (${share}€/hlö)</span>
+              ${splitTag}
             </div>
           </div>
           <div class="expense-right">
@@ -956,8 +1100,12 @@
 
     expenses.forEach(e => {
       balances[e.paidBy] += e.amount;
-      const share = e.amount / e.splitBetween.length;
-      e.splitBetween.forEach(p => { balances[p] -= share; });
+      if (e.customSplit) {
+        Object.entries(e.customSplit).forEach(([p, share]) => { balances[p] -= share; });
+      } else {
+        const share = e.amount / e.splitBetween.length;
+        e.splitBetween.forEach(p => { balances[p] -= share; });
+      }
     });
 
     // Totals-taulukko
