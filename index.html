@@ -1061,6 +1061,7 @@
     try {
       await push(ref(db, 'expenses'), expense);
       addLog('Kulu lisätty', `${formatEur(expense.amount)} — ${expense.description || '(ei selitettä)'} — jaettu: ${expense.splitBetween.join(', ')}`);
+      playPriceSound(expense.amount);
       document.getElementById('input-amount').value = '';
       document.getElementById('input-desc').value = '';
       setTodayDate();
@@ -1293,6 +1294,19 @@
       container.innerHTML = '<div class="log-empty">Virhe lokin lataamisessa.</div>';
     }
   };
+
+  // ── Äänet ─────────────────────────────────────────────
+  function playPriceSound(amount) {
+    let file;
+    if (amount < 50) {
+      file = 'melkosen halpaa.wav';
+    } else if (amount < 100) {
+      file = 'aivan siedettävä.wav';
+    } else {
+      file = 'kallista.wav';
+    }
+    new Audio(file).play().catch(() => {});
+  }
 
   // ── Apufunktiot ───────────────────────────────────────
   function formatEur(n) {
