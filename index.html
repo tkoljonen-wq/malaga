@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Malaga 2026">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -622,6 +622,49 @@
     }
     .remainder-ok   { color: var(--text); }
     .remainder-neg  { color: var(--negative); }
+
+    /* Loki */
+    .btn-log {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 16px;
+      width: 32px; height: 32px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-left: 6px;
+      transition: color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-log:hover { color: var(--accent); border-color: var(--accent); }
+
+    .log-entry {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 0;
+      font-size: 13px;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-time { color: var(--text-muted); font-size: 11px; margin-bottom: 3px; }
+    .log-action { font-weight: 600; color: var(--accent); }
+    .log-user { color: var(--text-muted); }
+    .log-details { color: var(--text); margin-top: 2px; }
+    .log-empty { text-align: center; padding: 32px; color: var(--text-muted); }
+    .btn-copy-log {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      margin-top: 16px;
+      width: 100%;
+    }
+    .btn-copy-log:hover { border-color: var(--accent); color: var(--accent); }
   </style>
 </head>
 <body>
@@ -658,6 +701,7 @@
       <span class="user-dot"></span>
       <span id="header-username"></span>
       <button class="btn-change-user" id="btn-change-user" title="Vaihda käyttäjä">✎</button>
+      <button class="btn-log" id="btn-log" title="Loki" onclick="openLog()">📋</button>
     </div>
   </header>
 
@@ -751,10 +795,22 @@
   </div>
 </div>
 
+<!-- MODAALI: Loki -->
+<div class="modal-overlay" id="modal-log">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📋 LOKI</div>
+      <button class="btn-close" onclick="closeModal('modal-log')">✕</button>
+    </div>
+    <div id="log-entries"></div>
+    <button class="btn-copy-log" id="btn-copy-log">📋 Kopioi leikepöydälle</button>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getDatabase, ref, push, onValue, remove, serverTimestamp }
+  import { getDatabase, ref, push, onValue, remove, serverTimestamp, get }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
   // ─────────────────────────────────────────────────────
@@ -807,6 +863,9 @@
     document.getElementById('splash').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     document.getElementById('header-username').textContent = currentUser;
+    if (currentUser === ADMIN) {
+      document.getElementById('btn-log').style.display = 'flex';
+    }
     loadExpenses();
     renderSummary();
   }
@@ -824,6 +883,7 @@
       currentUser = sel;
       localStorage.setItem('malaga_user', sel);
       showApp();
+      addLog('Kirjautuminen', '');
     });
 
     document.getElementById('btn-change-user').addEventListener('click', () => {
@@ -853,6 +913,9 @@
 
     document.getElementById('btn-confirm-delete').addEventListener('click', () => {
       if (pendingDeleteId) {
+        const e = allExpenses[pendingDeleteId];
+        const details = e ? `${formatEur(e.amount)} — ${e.description || '(ei selitettä)'} — maksonut: ${e.paidBy}` : pendingDeleteId;
+        addLog('Kulu poistettu', details);
         remove(ref(db, 'expenses/' + pendingDeleteId));
         pendingDeleteId = null;
       }
@@ -997,6 +1060,7 @@
 
     try {
       await push(ref(db, 'expenses'), expense);
+      addLog('Kulu lisätty', `${formatEur(expense.amount)} — ${expense.description || '(ei selitettä)'} — jaettu: ${expense.splitBetween.join(', ')}`);
       document.getElementById('input-amount').value = '';
       document.getElementById('input-desc').value = '';
       setTodayDate();
@@ -1178,6 +1242,57 @@
   document.querySelectorAll('.modal-overlay').forEach(el => {
     el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
   });
+
+  // ── Loki ─────────────────────────────────────────────
+  async function addLog(action, details) {
+    if (!currentUser) return;
+    try {
+      await push(ref(db, 'logs'), {
+        timestamp: Date.now(),
+        user: currentUser,
+        action,
+        details: details || ''
+      });
+    } catch(e) {}
+  }
+
+  window.openLog = async function() {
+    const container = document.getElementById('log-entries');
+    container.innerHTML = '<div class="log-empty">Ladataan...</div>';
+    openModal('modal-log');
+    try {
+      const snap = await get(ref(db, 'logs'));
+      const raw = snap.val() || {};
+      const entries = Object.values(raw).sort((a, b) => b.timestamp - a.timestamp);
+      if (entries.length === 0) {
+        container.innerHTML = '<div class="log-empty">Loki on tyhjä.</div>';
+      } else {
+        container.innerHTML = entries.map(e => {
+          const d = new Date(e.timestamp);
+          const timeStr = d.toLocaleString('fi-FI', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+          return `<div class="log-entry">
+            <div class="log-time">${escHtml(timeStr)}</div>
+            <div><span class="log-action">${escHtml(e.action)}</span> <span class="log-user">— ${escHtml(e.user)}</span></div>
+            ${e.details ? `<div class="log-details">${escHtml(e.details)}</div>` : ''}
+          </div>`;
+        }).join('');
+      }
+      document.getElementById('btn-copy-log').onclick = () => {
+        const text = entries.map(e => {
+          const d = new Date(e.timestamp);
+          const timeStr = d.toLocaleString('fi-FI', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+          return `${timeStr} | ${e.action} | ${e.user}${e.details ? ' | ' + e.details : ''}`;
+        }).join('\n');
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.getElementById('btn-copy-log');
+          btn.textContent = '✅ Kopioitu!';
+          setTimeout(() => { btn.textContent = '📋 Kopioi leikepöydälle'; }, 2000);
+        }).catch(() => alert('Kopiointi epäonnistui.'));
+      };
+    } catch(e) {
+      container.innerHTML = '<div class="log-empty">Virhe lokin lataamisessa.</div>';
+    }
+  };
 
   // ── Apufunktiot ───────────────────────────────────────
   function formatEur(n) {
