@@ -916,12 +916,12 @@
 
     document.getElementById('btn-settlement').addEventListener('click', showSettlement);
 
-    document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+    document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
       if (pendingDeleteId) {
         const e = allExpenses[pendingDeleteId];
         const details = e ? `${formatEur(e.amount)} — ${e.description || '(ei selitettä)'} — maksonut: ${e.paidBy}` : pendingDeleteId;
-        addLog('Kulu poistettu', details);
-        remove(ref(db, 'expenses/' + pendingDeleteId));
+        await addLog('Kulu poistettu', details);
+        await remove(ref(db, 'expenses/' + pendingDeleteId));
         pendingDeleteId = null;
       }
       closeModal('modal-confirm');
@@ -1065,7 +1065,7 @@
 
     try {
       await push(ref(db, 'expenses'), expense);
-      addLog('Kulu lisätty', `${formatEur(expense.amount)} — ${expense.description || '(ei selitettä)'} — jaettu: ${expense.splitBetween.join(', ')}`);
+      await addLog('Kulu lisätty', `${formatEur(expense.amount)} — ${expense.description || '(ei selitettä)'} — jaettu: ${expense.splitBetween.join(', ')}`);
       playPriceSound(expense.amount);
       document.getElementById('input-amount').value = '';
       document.getElementById('input-desc').value = '';
