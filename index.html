@@ -6,13 +6,13 @@
   <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Malaga 2026">
+  <meta name="apple-mobile-web-app-title" content="Kulujen jako">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <title>Malaga 2026</title>
+  <title>Kulujen jako</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -64,7 +64,7 @@
 
     .splash-title {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 56px;
+      font-size: 48px;
       letter-spacing: 4px;
       color: var(--accent);
       line-height: 1;
@@ -86,6 +86,7 @@
       padding: 28px 24px;
       width: 100%;
       max-width: 360px;
+      text-align: left;
     }
 
     .splash-card h2 {
@@ -168,6 +169,66 @@
       font-size: 14px;
       padding: 10px;
     }
+
+    /* Ryhmäkoodi-näyttö */
+    .group-code-box {
+      background: var(--card);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      margin: 4px 0 20px;
+    }
+    .group-code-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 52px;
+      letter-spacing: 10px;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .group-code-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Jäsenten syöttörivi */
+    .member-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .member-input-row input { margin-bottom: 0; flex: 1; }
+    .btn-remove-member {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-remove-member:hover { color: var(--negative); border-color: var(--negative); }
+
+    /* Ryhmä löytyi -infolaatikko */
+    .group-found-box {
+      background: var(--card);
+      border: 1px solid var(--positive);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .group-found-box strong { color: var(--positive); }
 
     /* ── SOVELLUS ── */
     #app { display: none; flex-direction: column; min-height: 100dvh; }
@@ -497,6 +558,7 @@
       padding: 24px 20px 32px;
       animation: slide-up 0.25s ease;
     }
+
     @keyframes slide-up {
       from { transform: translateY(40px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
@@ -669,24 +731,92 @@
 </head>
 <body>
 
-<!-- SPLASH: Nimen valinta -->
+<!-- SPLASH -->
 <div id="splash">
   <div class="splash-sun">☀️</div>
-  <div class="splash-title">MALAGA 2026</div>
-  <div class="splash-sub">Poikien reissu 🍺</div>
-  <div class="splash-card">
-    <h2>Kuka olet?</h2>
-    <p>Valitse nimesi. Sovellus muistaa sinut jatkossa.</p>
-    <div class="select-wrap">
-      <select id="name-select">
-        <option value="">— Valitse nimi —</option>
-        <option value="Timppa">Timppa</option>
-        <option value="Matti">Matti</option>
-        <option value="Petteri">Petteri</option>
-        <option value="Tatu">Tatu</option>
-      </select>
+  <div class="splash-title" id="splash-dynamic-title">KULUJEN JAKO</div>
+  <div class="splash-sub">Matkojen yhteiset kulut 🍺</div>
+
+  <!-- Lataus -->
+  <div id="splash-loading" class="splash-card" style="text-align:center;padding:32px 24px">
+    <div class="spinner"></div>
+    <p style="color:var(--text-muted);font-size:14px;margin:0">Ladataan...</p>
+  </div>
+
+  <!-- Vaihe 1: Valinta -->
+  <div class="splash-card" id="splash-choice" style="display:none">
+    <h2>Tervetuloa!</h2>
+    <p>Luo uusi ryhmä tai liity olemassa olevaan ryhmäkoodilla.</p>
+    <button class="btn btn-primary" id="btn-show-create" style="margin-bottom:10px">+ LUO UUSI RYHMÄ</button>
+    <button class="btn btn-ghost" id="btn-show-join">LIITY RYHMÄÄN</button>
+  </div>
+
+  <!-- Vaihe 2a: Luo ryhmä -->
+  <div class="splash-card" id="splash-create" style="display:none">
+    <h2>Luo uusi ryhmä</h2>
+    <p style="margin-bottom:16px">Anna ryhmälle nimi ja lisää jäsenet.</p>
+    <div class="form-group">
+      <label for="input-group-name">Ryhmän nimi *</label>
+      <input type="text" id="input-group-name" placeholder="esim. Malaga 2026">
     </div>
-    <button class="btn btn-primary" id="btn-join">OLEN MUKANA! 🤙</button>
+    <div class="form-group">
+      <label>Jäsenet (väh. 2) *</label>
+      <div id="members-list"></div>
+      <button type="button" id="btn-add-member" class="btn btn-ghost" style="margin-top:8px;font-size:13px;padding:9px">+ Lisää jäsen</button>
+    </div>
+    <button class="btn btn-primary" id="btn-do-create" style="margin-bottom:10px">LUO RYHMÄ</button>
+    <button class="btn btn-ghost" id="btn-back-create">← Takaisin</button>
+  </div>
+
+  <!-- Vaihe 2b: Ryhmä luotu — näytä koodi + valitse oma nimi -->
+  <div class="splash-card" id="splash-created" style="display:none">
+    <h2>Ryhmä luotu! 🎉</h2>
+    <p>Jaa tämä koodi kavereille:</p>
+    <div class="group-code-box">
+      <div class="group-code-value" id="created-code-value"></div>
+      <div class="group-code-hint">Kavereiden täytyy syöttää tämä koodi liittyäkseen</div>
+    </div>
+    <div class="form-group">
+      <label for="created-name-select">Mikä sinun nimesi on?</label>
+      <div class="select-wrap">
+        <select id="created-name-select"></select>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btn-start-created">ALOITA 🤙</button>
+  </div>
+
+  <!-- Vaihe 3: Liity ryhmään -->
+  <div class="splash-card" id="splash-join" style="display:none">
+    <h2>Liity ryhmään</h2>
+    <p style="margin-bottom:16px">Pyydä ryhmän perustajalta 6-merkkinen koodi.</p>
+    <div class="form-group">
+      <label for="input-join-code">Ryhmäkoodi</label>
+      <input type="text" id="input-join-code" placeholder="ABC123" maxlength="6"
+             style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-size:22px;font-weight:700">
+    </div>
+    <button class="btn btn-primary" id="btn-fetch-group" style="margin-bottom:12px">HAE RYHMÄ →</button>
+    <div id="join-group-info" style="display:none">
+      <div class="group-found-box">Ryhmä: <strong id="join-group-name-display"></strong></div>
+      <div class="form-group">
+        <label for="join-name-select">Mikä sinun nimesi on?</label>
+        <div class="select-wrap">
+          <select id="join-name-select"></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-do-join" style="margin-bottom:10px">LIITY 🤙</button>
+    </div>
+    <button class="btn btn-ghost" id="btn-back-join">← Takaisin</button>
+  </div>
+
+  <!-- Vaihda käyttäjä (sama ryhmä) -->
+  <div class="splash-card" id="splash-relogin" style="display:none">
+    <h2 id="relogin-title">Kuka olet?</h2>
+    <p id="relogin-group-label" style="margin-bottom:16px"></p>
+    <div class="select-wrap">
+      <select id="relogin-name-select"></select>
+    </div>
+    <button class="btn btn-primary" id="btn-relogin" style="margin-bottom:10px">JATKA 🤙</button>
+    <button class="btn btn-ghost" id="btn-change-group">Vaihda ryhmä</button>
   </div>
 </div>
 
@@ -696,7 +826,7 @@
   <div id="offline-banner">📵 Offline — muutokset eivät tallennu</div>
 
   <header>
-    <div class="header-title">MALAGA 2026 🌞</div>
+    <div class="header-title" id="header-group-name"></div>
     <div class="header-user">
       <span class="user-dot"></span>
       <span id="header-username"></span>
@@ -708,9 +838,7 @@
   <main>
     <!-- Yhteenveto -->
     <div class="section-title">MAKSETTU YHTEENSÄ</div>
-    <div class="summary-grid" id="summary-grid">
-      <!-- Täytetään JS:llä -->
-    </div>
+    <div class="summary-grid" id="summary-grid"></div>
 
     <!-- Kulusyöttö -->
     <div class="section-title">LISÄÄ KULU</div>
@@ -735,12 +863,7 @@
           <button class="split-btn active" id="split-all-btn" onclick="setSplitAll()">Kaikille</button>
           <button class="split-btn" id="split-custom-btn" onclick="setSplitCustom()">Valituille</button>
         </div>
-        <div class="checkboxes" id="split-checkboxes">
-          <label class="cb-label"><input type="checkbox" value="Timppa" checked> Timppa</label>
-          <label class="cb-label"><input type="checkbox" value="Matti" checked> Matti</label>
-          <label class="cb-label"><input type="checkbox" value="Petteri" checked> Petteri</label>
-          <label class="cb-label"><input type="checkbox" value="Tatu" checked> Tatu</label>
-        </div>
+        <div class="checkboxes" id="split-checkboxes"></div>
         <div class="split-toggle" id="split-type-toggle">
           <button class="split-btn active" id="split-equal-btn" onclick="setSplitEqual()">Tasan</button>
           <button class="split-btn" id="split-unequal-btn" onclick="setSplitUnequal()">Oma jako</button>
@@ -810,11 +933,9 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getDatabase, ref, push, onValue, remove, serverTimestamp, get }
+  import { getDatabase, ref, set, push, onValue, remove, get }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-  // ─────────────────────────────────────────────────────
-  // VAIHDA NÄMÄ OMILLA FIREBASE-ARVOILLASI:
   const firebaseConfig = {
     apiKey:            "AIzaSyANGrT340D2ePHJPY2tzEcthSnjLqXTbME",
     authDomain:        "malaga2026-322ea.firebaseapp.com",
@@ -824,87 +945,302 @@
     messagingSenderId: "117645941423",
     appId:             "1:117645941423:web:d1b0bdf56e42abc109d25a"
   };
-  // ─────────────────────────────────────────────────────
-
-  const USERS = ['Timppa', 'Matti', 'Petteri', 'Tatu'];
-  const ADMIN = 'Timppa';
 
   const app = initializeApp(firebaseConfig);
   const db  = getDatabase(app);
 
-  let currentUser = null;
-  let allExpenses = {};   // { id: expenseObj }
+  let currentUser   = null;
+  let groupCode     = null;
+  let groupMeta     = null;   // { name, admin, createdAt }
+  let groupMembers  = [];     // string[]
+  let allExpenses   = {};     // { id: expenseObj }
   let pendingDeleteId = null;
-  let splitMode = 'equal'; // 'equal' | 'custom'
+  let splitMode     = 'equal'; // 'equal' | 'custom'
+  let memberInputs  = ['', '']; // for create-group form
 
   // ── Offline ─────────────────────────────────────────
   window.addEventListener('online',  () => { document.getElementById('offline-banner').style.display = 'none'; });
   window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
 
+  // ── Splash navigation ────────────────────────────────
+  function showSplash(state) {
+    document.getElementById('splash').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    ['loading','choice','create','created','join','relogin'].forEach(s => {
+      document.getElementById('splash-' + s).style.display = s === state ? '' : 'none';
+    });
+  }
+
+  // ── Ryhmäkoodi ───────────────────────────────────────
+  function generateCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
   // ── Tunnistus ────────────────────────────────────────
-  function initUser() {
-    const saved = localStorage.getItem('malaga_user');
-    if (saved && USERS.includes(saved)) {
-      currentUser = saved;
-      showApp();
-    } else {
-      document.getElementById('splash').style.display = 'flex';
-      document.getElementById('app').style.display = 'none';
+  async function initUser() {
+    const savedGroup = localStorage.getItem('malaga_group');
+    const savedUser  = localStorage.getItem('malaga_user');
+
+    if (savedGroup && savedUser) {
+      try {
+        const [metaSnap, membersSnap] = await Promise.all([
+          get(ref(db, `groups/${savedGroup}/meta`)),
+          get(ref(db, `groups/${savedGroup}/members`))
+        ]);
+        if (metaSnap.exists()) {
+          const raw = membersSnap.val() || [];
+          const members = Array.isArray(raw) ? raw : Object.values(raw);
+          if (members.includes(savedUser)) {
+            groupCode    = savedGroup;
+            groupMeta    = metaSnap.val();
+            groupMembers = members;
+            currentUser  = savedUser;
+            showApp();
+            return;
+          }
+        }
+      } catch (_) {
+        // Offline: luotetaan tallennettuihin tietoihin
+        groupCode    = savedGroup;
+        groupMeta    = { name: savedGroup, admin: '' };
+        groupMembers = [savedUser];
+        currentUser  = savedUser;
+        showApp();
+        return;
+      }
+      localStorage.removeItem('malaga_group');
+      localStorage.removeItem('malaga_user');
+    } else if (savedGroup && !savedUser) {
+      try {
+        const [metaSnap, membersSnap] = await Promise.all([
+          get(ref(db, `groups/${savedGroup}/meta`)),
+          get(ref(db, `groups/${savedGroup}/members`))
+        ]);
+        if (metaSnap.exists()) {
+          const raw = membersSnap.val() || [];
+          groupCode    = savedGroup;
+          groupMeta    = metaSnap.val();
+          groupMembers = Array.isArray(raw) ? raw : Object.values(raw);
+          populateRelogin();
+          showSplash('relogin');
+          return;
+        }
+      } catch (_) {}
+      localStorage.removeItem('malaga_group');
     }
+
+    showSplash('choice');
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    initUser();
     setTodayDate();
     bindEvents();
+    initUser();
   });
 
   function showApp() {
     document.getElementById('splash').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    document.getElementById('header-username').textContent = currentUser;
-    const isAdmin = currentUser === ADMIN;
-    document.getElementById('btn-log').style.display   = isAdmin ? 'flex' : 'none';
+    document.getElementById('app').style.display    = 'flex';
+    document.getElementById('header-username').textContent   = currentUser;
+    document.getElementById('header-group-name').textContent = (groupMeta?.name || groupCode) + ' 🌞';
+    document.getElementById('btn-log').style.display = isAdmin() ? 'flex' : 'none';
+    renderSplitCheckboxes();
     loadExpenses();
     renderSummary();
   }
 
-  function setTodayDate() {
-    const d = new Date();
-    const iso = d.toISOString().slice(0, 10);
-    document.getElementById('input-date').value = iso;
+  function isAdmin() {
+    return !!groupMeta && currentUser === groupMeta.admin;
   }
 
+  function setTodayDate() {
+    document.getElementById('input-date').value = new Date().toISOString().slice(0, 10);
+  }
+
+  // ── Jäsenten syöttö (luo-ryhmä-näkymä) ──────────────
+  function renderMemberInputs() {
+    const list = document.getElementById('members-list');
+    list.innerHTML = memberInputs.map((val, i) => `
+      <div class="member-input-row">
+        <input type="text" class="member-input" value="${escHtml(val)}" placeholder="Jäsen ${i + 1}" data-idx="${i}">
+        ${memberInputs.length > 2
+          ? `<button type="button" class="btn-remove-member" data-idx="${i}">×</button>`
+          : ''}
+      </div>`).join('');
+    list.querySelectorAll('.member-input').forEach(inp => {
+      inp.addEventListener('input', e => { memberInputs[+e.target.dataset.idx] = e.target.value.trim(); });
+    });
+    list.querySelectorAll('.btn-remove-member').forEach(btn => {
+      btn.addEventListener('click', e => {
+        memberInputs.splice(+e.currentTarget.dataset.idx, 1);
+        renderMemberInputs();
+      });
+    });
+  }
+
+  // ── Split-checkboxit (app-näkymä) ────────────────────
+  function renderSplitCheckboxes() {
+    const container = document.getElementById('split-checkboxes');
+    container.innerHTML = groupMembers.map(name => `
+      <label class="cb-label">
+        <input type="checkbox" value="${escHtml(name)}" checked> ${escHtml(name)}
+      </label>`).join('');
+    container.addEventListener('change', () => {
+      if (splitMode === 'custom') renderCustomAmounts();
+    });
+  }
+
+  // ── Relogin-näkymä ───────────────────────────────────
+  function populateRelogin() {
+    const name = groupMeta?.name || groupCode;
+    document.getElementById('relogin-group-label').textContent = 'Ryhmä: ' + name;
+    document.getElementById('splash-dynamic-title').textContent = (name || 'KULUJEN JAKO').toUpperCase();
+    const sel = document.getElementById('relogin-name-select');
+    sel.innerHTML = '<option value="">— Valitse nimi —</option>' +
+      groupMembers.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+  }
+
+  // ── Tapahtumat ───────────────────────────────────────
   function bindEvents() {
-    document.getElementById('btn-join').addEventListener('click', () => {
-      const sel = document.getElementById('name-select').value;
-      if (!sel) { alert('Valitse ensin nimesi!'); return; }
+    // Valintanäkymä
+    document.getElementById('btn-show-create').addEventListener('click', () => {
+      memberInputs = ['', ''];
+      renderMemberInputs();
+      document.getElementById('input-group-name').value = '';
+      showSplash('create');
+    });
+    document.getElementById('btn-show-join').addEventListener('click', () => {
+      document.getElementById('input-join-code').value = '';
+      document.getElementById('join-group-info').style.display = 'none';
+      showSplash('join');
+    });
+
+    // Luo ryhmä
+    document.getElementById('btn-add-member').addEventListener('click', () => {
+      if (memberInputs.length >= 10) return;
+      memberInputs.push('');
+      renderMemberInputs();
+    });
+    document.getElementById('btn-back-create').addEventListener('click', () => showSplash('choice'));
+
+    document.getElementById('btn-do-create').addEventListener('click', async () => {
+      const groupName = document.getElementById('input-group-name').value.trim();
+      const members = memberInputs.map(s => s.trim()).filter(Boolean);
+      const unique = [...new Set(members)];
+      if (!groupName) { alert('Anna ryhmälle nimi!'); return; }
+      if (unique.length < 2) { alert('Lisää väh. kaksi eri jäsentä!'); return; }
+
+      const btn = document.getElementById('btn-do-create');
+      btn.disabled = true;
+      btn.textContent = 'Luodaan...';
+      try {
+        const code = generateCode();
+        const meta = { name: groupName, admin: unique[0], createdAt: Date.now() };
+        await set(ref(db, `groups/${code}/meta`), meta);
+        await set(ref(db, `groups/${code}/members`), unique);
+        groupCode    = code;
+        groupMeta    = meta;
+        groupMembers = unique;
+        document.getElementById('created-code-value').textContent = code;
+        document.getElementById('created-name-select').innerHTML =
+          unique.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+        showSplash('created');
+      } catch (e) {
+        alert('Virhe ryhmän luomisessa. Tarkista verkko.');
+      }
+      btn.disabled = false;
+      btn.textContent = 'LUO RYHMÄ';
+    });
+
+    document.getElementById('btn-start-created').addEventListener('click', () => {
+      const sel = document.getElementById('created-name-select').value;
+      if (!sel) { alert('Valitse nimesi!'); return; }
+      currentUser = sel;
+      localStorage.setItem('malaga_group', groupCode);
+      localStorage.setItem('malaga_user', sel);
+      showApp();
+      addLog('Ryhmä luotu ja kirjauduttu', groupMeta.name);
+    });
+
+    // Liity ryhmään
+    document.getElementById('input-join-code').addEventListener('input', e => {
+      e.target.value = e.target.value.toUpperCase();
+      document.getElementById('join-group-info').style.display = 'none';
+    });
+    document.getElementById('btn-back-join').addEventListener('click', () => showSplash('choice'));
+
+    document.getElementById('btn-fetch-group').addEventListener('click', async () => {
+      const code = document.getElementById('input-join-code').value.trim().toUpperCase();
+      if (code.length !== 6) { alert('Syötä 6-merkkinen koodi!'); return; }
+      const btn = document.getElementById('btn-fetch-group');
+      btn.disabled = true; btn.textContent = 'Haetaan...';
+      try {
+        const [metaSnap, membersSnap] = await Promise.all([
+          get(ref(db, `groups/${code}/meta`)),
+          get(ref(db, `groups/${code}/members`))
+        ]);
+        if (!metaSnap.exists()) { alert('Ryhmää ei löydy. Tarkista koodi.'); return; }
+        const raw = membersSnap.val() || [];
+        const members = Array.isArray(raw) ? raw : Object.values(raw);
+        document.getElementById('join-group-name-display').textContent = metaSnap.val().name;
+        document.getElementById('join-name-select').innerHTML =
+          '<option value="">— Valitse nimi —</option>' +
+          members.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+        document.getElementById('join-group-info').style.display = '';
+        // tallenna väliaikaisesti
+        groupCode    = code;
+        groupMeta    = metaSnap.val();
+        groupMembers = members;
+      } catch (e) {
+        alert('Virhe haettaessa ryhmää. Tarkista verkko.');
+      }
+      btn.disabled = false; btn.textContent = 'HAE RYHMÄ →';
+    });
+
+    document.getElementById('btn-do-join').addEventListener('click', () => {
+      const sel = document.getElementById('join-name-select').value;
+      if (!sel) { alert('Valitse nimesi!'); return; }
+      currentUser = sel;
+      localStorage.setItem('malaga_group', groupCode);
+      localStorage.setItem('malaga_user', sel);
+      showApp();
+      addLog('Kirjauduttu', groupMeta.name);
+    });
+
+    // Relogin (sama ryhmä, eri nimi)
+    document.getElementById('btn-relogin').addEventListener('click', () => {
+      const sel = document.getElementById('relogin-name-select').value;
+      if (!sel) { alert('Valitse nimesi!'); return; }
       currentUser = sel;
       localStorage.setItem('malaga_user', sel);
       showApp();
-      addLog('Kirjautuminen', '');
+    });
+    document.getElementById('btn-change-group').addEventListener('click', () => {
+      localStorage.removeItem('malaga_group');
+      localStorage.removeItem('malaga_user');
+      groupCode = null; groupMeta = null; groupMembers = []; currentUser = null;
+      document.getElementById('splash-dynamic-title').textContent = 'KULUJEN JAKO';
+      showSplash('choice');
     });
 
+    // Vaihda käyttäjä (sovelluksesta)
     document.getElementById('btn-change-user').addEventListener('click', () => {
       if (!confirm('Vaihda käyttäjä?')) return;
       localStorage.removeItem('malaga_user');
       currentUser = null;
-      document.getElementById('splash').style.display = 'flex';
-      document.getElementById('app').style.display = 'none';
-      document.getElementById('name-select').value = '';
-      document.getElementById('btn-log').style.display   = 'none';
+      populateRelogin();
+      showSplash('relogin');
     });
 
+    // Lisää kulu -nappi
     document.getElementById('btn-add-expense').addEventListener('click', addExpense);
-
     document.getElementById('input-amount').addEventListener('keydown', e => {
       if (e.key === 'Enter') addExpense();
     });
-
     document.getElementById('input-amount').addEventListener('input', () => {
       if (splitMode === 'custom') updateRemainder();
     });
-
     document.getElementById('split-checkboxes').addEventListener('change', () => {
       if (splitMode === 'custom') renderCustomAmounts();
     });
@@ -916,10 +1252,14 @@
         const e = allExpenses[pendingDeleteId];
         const details = e ? `${formatEur(e.amount)} — ${e.description || '(ei selitettä)'} — maksanut: ${e.paidBy}` : pendingDeleteId;
         await addLog('Kulu poistettu', details);
-        await remove(ref(db, 'expenses/' + pendingDeleteId));
+        await remove(ref(db, `groups/${groupCode}/expenses/${pendingDeleteId}`));
         pendingDeleteId = null;
       }
       closeModal('modal-confirm');
+    });
+
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+      el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
     });
   }
 
@@ -936,7 +1276,6 @@
     document.getElementById('split-checkboxes').classList.add('visible');
     if (splitMode === 'custom') renderCustomAmounts();
   };
-
   window.setSplitEqual = function() {
     splitMode = 'equal';
     document.getElementById('split-equal-btn').classList.add('active');
@@ -953,13 +1292,8 @@
   function renderCustomAmounts() {
     const users = getSelectedSplit();
     const container = document.getElementById('custom-amounts');
-
-    // Säilytä olemassa olevat arvot
     const prev = {};
-    container.querySelectorAll('.custom-amount-input').forEach(inp => {
-      prev[inp.dataset.user] = inp.value;
-    });
-
+    container.querySelectorAll('.custom-amount-input').forEach(inp => { prev[inp.dataset.user] = inp.value; });
     container.innerHTML = users.map((user, i) => {
       const isLast = i === users.length - 1;
       if (isLast) {
@@ -975,9 +1309,7 @@
           value="${val}" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
       </div>`;
     }).join('');
-
     updateRemainder();
-
     container.querySelectorAll('.custom-amount-input').forEach(inp => {
       inp.addEventListener('input', updateRemainder);
     });
@@ -986,9 +1318,7 @@
   function updateRemainder() {
     const total = Math.round((parseFloat(document.getElementById('input-amount').value) || 0) * 100) / 100;
     let sumOthers = 0;
-    document.querySelectorAll('.custom-amount-input').forEach(inp => {
-      sumOthers += parseFloat(inp.value) || 0;
-    });
+    document.querySelectorAll('.custom-amount-input').forEach(inp => { sumOthers += parseFloat(inp.value) || 0; });
     const remainder = Math.round((total - sumOthers) * 100) / 100;
     const el = document.getElementById('remainder-display');
     if (!el) return;
@@ -1006,17 +1336,15 @@
       sumOthers += val;
     });
     const total = Math.round((parseFloat(document.getElementById('input-amount').value) || 0) * 100) / 100;
-    const lastUser = users[users.length - 1];
-    result[lastUser] = Math.round((total - sumOthers) * 100) / 100;
+    result[users[users.length - 1]] = Math.round((total - sumOthers) * 100) / 100;
     return result;
   }
 
   function getSelectedSplit() {
     if (!document.getElementById('split-custom-btn').classList.contains('active')) {
-      return [...USERS];
+      return [...groupMembers];
     }
-    const checked = [...document.querySelectorAll('#split-checkboxes input:checked')];
-    return checked.map(cb => cb.value);
+    return [...document.querySelectorAll('#split-checkboxes input:checked')].map(cb => cb.value);
   }
 
   // ── Lisää kulu ────────────────────────────────────────
@@ -1026,12 +1354,8 @@
     const date  = document.getElementById('input-date').value;
     const split = getSelectedSplit();
 
-    if (!amountRaw || amountRaw <= 0) {
-      alert('Syötä summa!'); return;
-    }
-    if (split.length === 0) {
-      alert('Valitse vähintään yksi henkilö!'); return;
-    }
+    if (!amountRaw || amountRaw <= 0) { alert('Syötä summa!'); return; }
+    if (split.length === 0) { alert('Valitse vähintään yksi henkilö!'); return; }
 
     let customSplit = null;
     if (splitMode === 'custom' && split.length > 1) {
@@ -1042,27 +1366,24 @@
         alert('Summien täytyy olla yhteensä ' + total.toFixed(2).replace('.', ',') + ' €!');
         return;
       }
-      if (Object.values(customSplit).some(v => v < 0)) {
-        alert('Summat eivät voi olla negatiivisia!');
-        return;
-      }
+      if (Object.values(customSplit).some(v => v < 0)) { alert('Summat eivät voi olla negatiivisia!'); return; }
     }
 
     const expense = {
       paidBy: currentUser,
       amount: Math.round(amountRaw * 100) / 100,
       description: desc || '',
-      date: date || new Date().toISOString().slice(0,10),
+      date: date || new Date().toISOString().slice(0, 10),
       splitBetween: split,
       createdAt: Date.now()
     };
     if (customSplit) expense.customSplit = customSplit;
 
     try {
-      await push(ref(db, 'expenses'), expense);
+      await push(ref(db, `groups/${groupCode}/expenses`), expense);
       await addLog('Kulu lisätty', `${formatEur(expense.amount)} — ${expense.description || '(ei selitettä)'} — jaettu: ${expense.splitBetween.join(', ')}`);
       document.getElementById('input-amount').value = '';
-      document.getElementById('input-desc').value = '';
+      document.getElementById('input-desc').value   = '';
       setTodayDate();
       setSplitAll();
       setSplitEqual();
@@ -1073,20 +1394,19 @@
 
   // ── Firebase: kuuntele kuluja ─────────────────────────
   function loadExpenses() {
-    onValue(ref(db, 'expenses'), snapshot => {
+    onValue(ref(db, `groups/${groupCode}/expenses`), snapshot => {
       allExpenses = snapshot.val() || {};
       renderExpenses();
       renderSummary();
-      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('loading-state').style.display  = 'none';
       document.getElementById('expenses-list').style.display = 'flex';
     });
   }
 
   // ── Renderöi kulut ────────────────────────────────────
   function renderExpenses() {
-    const list = document.getElementById('expenses-list');
-    const sorted = Object.entries(allExpenses)
-      .sort(([,a],[,b]) => (b.createdAt||0) - (a.createdAt||0));
+    const list   = document.getElementById('expenses-list');
+    const sorted = Object.entries(allExpenses).sort(([,a],[,b]) => (b.createdAt||0) - (a.createdAt||0));
 
     if (sorted.length === 0) {
       list.innerHTML = `<div class="empty-state"><p>🏖️</p><p>Ei kuluja vielä.<br>Lisää ensimmäinen!</p></div>`;
@@ -1094,26 +1414,23 @@
     }
 
     list.innerHTML = sorted.map(([id, e]) => {
-      const canDelete = currentUser === ADMIN || e.paidBy === currentUser;
-      const isMine = e.paidBy === currentUser;
+      const canDelete = isAdmin() || e.paidBy === currentUser;
+      const isMine    = e.paidBy === currentUser;
       const desc = e.description
         ? `<span class="expense-desc">${escHtml(e.description)}</span>`
         : `<span class="expense-desc no-desc">— ei selitettä —</span>`;
-      const splitList = Array.isArray(e.splitBetween)
-        ? e.splitBetween
-        : Object.values(e.splitBetween || {});
+      const splitList = Array.isArray(e.splitBetween) ? e.splitBetween : Object.values(e.splitBetween || {});
       let splitTag;
       if (e.customSplit) {
         const parts = splitList.map(p =>
-          `${escHtml(p)}\u00a0${(e.customSplit[p] || 0).toLocaleString('fi-FI', {minimumFractionDigits: 2, maximumFractionDigits: 2})}€`
+          `${escHtml(p)}\u00a0${(e.customSplit[p] || 0).toLocaleString('fi-FI', {minimumFractionDigits:2,maximumFractionDigits:2})}€`
         ).join(', ');
         splitTag = `<span class="split-tag">÷ ${parts}</span>`;
       } else {
-        const splitInfo = splitList.length === USERS.length ? 'Kaikki' : splitList.join(', ');
+        const splitInfo = splitList.length === groupMembers.length ? 'Kaikki' : splitList.join(', ');
         const share = splitList.length ? (e.amount / splitList.length).toFixed(2) : '?';
         splitTag = `<span class="split-tag">÷ ${escHtml(splitInfo)} (${share}€/hlö)</span>`;
       }
-
       return `
         <div class="expense-item${isMine ? ' mine' : ''}">
           <div class="expense-main">
@@ -1126,9 +1443,7 @@
           </div>
           <div class="expense-right">
             <span class="expense-amount">${formatEur(e.amount)}</span>
-            ${canDelete
-              ? `<button class="btn btn-danger" onclick="confirmDelete('${id}')">🗑</button>`
-              : ''}
+            ${canDelete ? `<button class="btn btn-danger" onclick="confirmDelete('${id}')">🗑</button>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -1137,14 +1452,11 @@
   // ── Renderöi yhteenveto ───────────────────────────────
   function renderSummary() {
     const totals = {};
-    USERS.forEach(u => totals[u] = 0);
-
+    groupMembers.forEach(u => { totals[u] = 0; });
     Object.values(allExpenses).forEach(e => {
-      totals[e.paidBy] = (totals[e.paidBy] || 0) + e.amount;
+      if (e.paidBy in totals) totals[e.paidBy] += e.amount;
     });
-
-    const grid = document.getElementById('summary-grid');
-    grid.innerHTML = USERS.map(name => {
+    document.getElementById('summary-grid').innerHTML = groupMembers.map(name => {
       const isMe = name === currentUser;
       return `
         <div class="summary-card${isMe ? ' is-me' : ''}">
@@ -1160,36 +1472,28 @@
   // ── Loppulaskelma ─────────────────────────────────────
   function showSettlement() {
     const expenses = Object.values(allExpenses);
-
-    // Laske nettosaldot
     const balances = {};
-    USERS.forEach(u => balances[u] = 0);
+    groupMembers.forEach(u => { balances[u] = 0; });
 
     expenses.forEach(e => {
-      if (!(e.paidBy in balances)) return; // tuntematon maksaja, ohitetaan
+      if (!(e.paidBy in balances)) return;
       balances[e.paidBy] += e.amount;
-      // Firebase voi palauttaa taulukon objektina {0:'Timppa',1:'Petteri'} — normalisoidaan
-      const splitList = Array.isArray(e.splitBetween)
-        ? e.splitBetween
-        : Object.values(e.splitBetween || {});
+      const splitList = Array.isArray(e.splitBetween) ? e.splitBetween : Object.values(e.splitBetween || {});
       if (e.customSplit) {
-        Object.entries(e.customSplit).forEach(([p, share]) => {
-          if (p in balances) balances[p] -= share;
-        });
+        Object.entries(e.customSplit).forEach(([p, share]) => { if (p in balances) balances[p] -= share; });
       } else {
-        if (!splitList.length) return; // ei jaettavia, ohitetaan
+        if (!splitList.length) return;
         const share = e.amount / splitList.length;
         splitList.forEach(p => { if (p in balances) balances[p] -= share; });
       }
     });
 
-    // Totals-taulukko
     const totalAll = expenses.reduce((s, e) => s + e.amount, 0);
     document.getElementById('settlement-totals').innerHTML = `
       <div class="settlement-total-row" style="font-weight:700;border-bottom:2px solid var(--border)">
         <span>Kulut yhteensä</span><span style="color:var(--accent);font-size:18px;">${formatEur(totalAll)}</span>
       </div>
-      ${USERS.map(u => {
+      ${groupMembers.map(u => {
         const bal = Math.round(balances[u] * 100) / 100;
         const cls = bal > 0.01 ? 'balance-positive' : bal < -0.01 ? 'balance-negative' : 'balance-zero';
         const sign = bal > 0.01 ? '+' : '';
@@ -1199,9 +1503,7 @@
         </div>`;
       }).join('')}`;
 
-    // Laske siirrot (greedy)
     const transactions = calcTransactions(balances);
-
     const txDiv = document.getElementById('settlement-transactions');
     if (transactions.length === 0) {
       txDiv.innerHTML = `<div class="all-clear"><div>🎉</div><p>Kaikki tilit selvillä!</p></div>`;
@@ -1214,18 +1516,15 @@
           <span class="tx-amount">${formatEur(tx.amount)}</span>
         </div>`).join('');
     }
-
     openModal('modal-settlement');
   }
 
   function calcTransactions(balances) {
     const eps = 0.01;
-    const debtors   = USERS.filter(u => balances[u] < -eps).map(u => ({name: u, amt: balances[u]}));
-    const creditors = USERS.filter(u => balances[u] >  eps).map(u => ({name: u, amt: balances[u]}));
-
+    const debtors   = groupMembers.filter(u => balances[u] < -eps).map(u => ({name: u, amt: balances[u]}));
+    const creditors = groupMembers.filter(u => balances[u] >  eps).map(u => ({name: u, amt: balances[u]}));
     debtors.sort((a,b)   => a.amt - b.amt);
     creditors.sort((a,b) => b.amt - a.amt);
-
     const txs = [];
     let i = 0, j = 0;
     while (i < debtors.length && j < creditors.length) {
@@ -1249,22 +1548,17 @@
   window.openModal  = function(id) { document.getElementById(id).classList.add('open'); };
   window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
 
-  // Sulje modaali taustaklikkaus
-  document.querySelectorAll('.modal-overlay').forEach(el => {
-    el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
-  });
-
   // ── Loki ─────────────────────────────────────────────
   async function addLog(action, details) {
-    if (!currentUser) return;
+    if (!currentUser || !groupCode) return;
     try {
-      await push(ref(db, 'logs'), {
+      await push(ref(db, `groups/${groupCode}/logs`), {
         timestamp: Date.now(),
         user: currentUser,
         action,
         details: details || ''
       });
-    } catch(e) {}
+    } catch(_) {}
   }
 
   window.openLog = async function() {
@@ -1272,8 +1566,8 @@
     container.innerHTML = '<div class="log-empty">Ladataan...</div>';
     openModal('modal-log');
     try {
-      const snap = await get(ref(db, 'logs'));
-      const raw = snap.val() || {};
+      const snap = await get(ref(db, `groups/${groupCode}/logs`));
+      const raw  = snap.val() || {};
       const entries = Object.values(raw).sort((a, b) => b.timestamp - a.timestamp);
       if (entries.length === 0) {
         container.innerHTML = '<div class="log-empty">Loki on tyhjä.</div>';
@@ -1300,11 +1594,10 @@
           setTimeout(() => { btn.textContent = '📋 Kopioi leikepöydälle'; }, 2000);
         }).catch(() => alert('Kopiointi epäonnistui.'));
       };
-    } catch(e) {
+    } catch(_) {
       container.innerHTML = '<div class="log-empty">Virhe lokin lataamisessa.</div>';
     }
   };
-
 
   // ── Apufunktiot ───────────────────────────────────────
   function formatEur(n) {
@@ -1312,7 +1605,7 @@
   }
   function formatDate(d) {
     if (!d) return '';
-    const [y,m,day] = d.split('-');
+    const [y, m, day] = d.split('-');
     return `${day}.${m}.${y}`;
   }
   function escHtml(s) {
@@ -1321,7 +1614,6 @@
 </script>
 
 <script>
-  // Service worker -rekisteröinti
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').catch(() => {});
