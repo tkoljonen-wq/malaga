@@ -1,16 +1,18 @@
-const CACHE_NAME = 'malaga-2026-v2';
+const CACHE_NAME = 'malaga-2026-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icons/icon-192.svg',
-  './icons/icon-512.svg',
-  './icons/icon-maskable.svg'
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable.png'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.allSettled(ASSETS.map(url => cache.add(url)))
+    )
   );
   self.skipWaiting();
 });
@@ -27,7 +29,6 @@ self.addEventListener('activate', event => {
 // Network-first: aina ensin verkosta, välimuisti vain offline-tilassa
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  // Ei välimuistita Firebase-pyyntöjä
   if (event.request.url.includes('firebaseio.com') ||
       event.request.url.includes('googleapis.com') ||
       event.request.url.includes('gstatic.com')) return;
