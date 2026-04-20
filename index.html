@@ -1105,15 +1105,18 @@
       const desc = e.description
         ? `<span class="expense-desc">${escHtml(e.description)}</span>`
         : `<span class="expense-desc no-desc">— ei selitettä —</span>`;
+      const splitList = Array.isArray(e.splitBetween)
+        ? e.splitBetween
+        : Object.values(e.splitBetween || {});
       let splitTag;
       if (e.customSplit) {
-        const parts = e.splitBetween.map(p =>
+        const parts = splitList.map(p =>
           `${escHtml(p)}\u00a0${(e.customSplit[p] || 0).toLocaleString('fi-FI', {minimumFractionDigits: 2, maximumFractionDigits: 2})}€`
         ).join(', ');
         splitTag = `<span class="split-tag">÷ ${parts}</span>`;
       } else {
-        const splitInfo = e.splitBetween.length === USERS.length ? 'Kaikki' : e.splitBetween.join(', ');
-        const share = (e.amount / e.splitBetween.length).toFixed(2);
+        const splitInfo = splitList.length === USERS.length ? 'Kaikki' : splitList.join(', ');
+        const share = splitList.length ? (e.amount / splitList.length).toFixed(2) : '?';
         splitTag = `<span class="split-tag">÷ ${escHtml(splitInfo)} (${share}€/hlö)</span>`;
       }
 
@@ -1169,12 +1172,20 @@
     USERS.forEach(u => balances[u] = 0);
 
     expenses.forEach(e => {
+      if (!(e.paidBy in balances)) return; // tuntematon maksaja, ohitetaan
       balances[e.paidBy] += e.amount;
+      // Firebase voi palauttaa taulukon objektina {0:'Timppa',1:'Petteri'} — normalisoidaan
+      const splitList = Array.isArray(e.splitBetween)
+        ? e.splitBetween
+        : Object.values(e.splitBetween || {});
       if (e.customSplit) {
-        Object.entries(e.customSplit).forEach(([p, share]) => { balances[p] -= share; });
+        Object.entries(e.customSplit).forEach(([p, share]) => {
+          if (p in balances) balances[p] -= share;
+        });
       } else {
-        const share = e.amount / e.splitBetween.length;
-        e.splitBetween.forEach(p => { balances[p] -= share; });
+        if (!splitList.length) return; // ei jaettavia, ohitetaan
+        const share = e.amount / splitList.length;
+        splitList.forEach(p => { if (p in balances) balances[p] -= share; });
       }
     });
 
