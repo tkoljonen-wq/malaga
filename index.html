@@ -702,7 +702,6 @@
       <span id="header-username"></span>
       <button class="btn-change-user" id="btn-change-user" title="Vaihda käyttäjä">✎</button>
       <button class="btn-log" id="btn-log" title="Loki" onclick="openLog()">📋</button>
-      <button class="btn-log" id="btn-sound" title="Ääniefektit" onclick="toggleSound()">🔊</button>
     </div>
   </header>
 
@@ -837,7 +836,6 @@
   let allExpenses = {};   // { id: expenseObj }
   let pendingDeleteId = null;
   let splitMode = 'equal'; // 'equal' | 'custom'
-  let soundEnabled = localStorage.getItem('malaga_sound') !== 'false';
 
   // ── Offline ─────────────────────────────────────────
   window.addEventListener('online',  () => { document.getElementById('offline-banner').style.display = 'none'; });
@@ -867,8 +865,6 @@
     document.getElementById('header-username').textContent = currentUser;
     const isAdmin = currentUser === ADMIN;
     document.getElementById('btn-log').style.display   = isAdmin ? 'flex' : 'none';
-    document.getElementById('btn-sound').style.display = isAdmin ? 'flex' : 'none';
-    if (isAdmin) updateSoundBtn();
     loadExpenses();
     renderSummary();
   }
@@ -897,7 +893,6 @@
       document.getElementById('app').style.display = 'none';
       document.getElementById('name-select').value = '';
       document.getElementById('btn-log').style.display   = 'none';
-      document.getElementById('btn-sound').style.display = 'none';
     });
 
     document.getElementById('btn-add-expense').addEventListener('click', addExpense);
@@ -1066,7 +1061,6 @@
     try {
       await push(ref(db, 'expenses'), expense);
       await addLog('Kulu lisätty', `${formatEur(expense.amount)} — ${expense.description || '(ei selitettä)'} — jaettu: ${expense.splitBetween.join(', ')}`);
-      playPriceSound(expense.amount);
       document.getElementById('input-amount').value = '';
       document.getElementById('input-desc').value = '';
       setTodayDate();
@@ -1311,29 +1305,6 @@
     }
   };
 
-  // ── Äänet ─────────────────────────────────────────────
-  window.toggleSound = function() {
-    soundEnabled = !soundEnabled;
-    localStorage.setItem('malaga_sound', soundEnabled);
-    updateSoundBtn();
-  };
-  function updateSoundBtn() {
-    const btn = document.getElementById('btn-sound');
-    btn.textContent = soundEnabled ? '🔊' : '🔇';
-    btn.title = soundEnabled ? 'Ääniefektit päällä — klikkaa poistaaksesi' : 'Ääniefektit pois — klikkaa aktivoidaksesi';
-  }
-  function playPriceSound(amount) {
-    if (!soundEnabled) return;
-    let file;
-    if (amount < 50) {
-      file = 'melkosen halpaa.wav';
-    } else if (amount < 100) {
-      file = 'aivan siedettävä.wav';
-    } else {
-      file = 'kallista.wav';
-    }
-    new Audio(file).play().catch(() => {});
-  }
 
   // ── Apufunktiot ───────────────────────────────────────
   function formatEur(n) {
