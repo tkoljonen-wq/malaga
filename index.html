@@ -937,7 +937,6 @@
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
   import { getAuth, signInAnonymously }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-
   const firebaseConfig = {
     apiKey:            "AIzaSyANGrT340D2ePHJPY2tzEcthSnjLqXTbME",
     authDomain:        "malaga2026-322ea.firebaseapp.com",
@@ -982,7 +981,7 @@
 
   // ── Tunnistus ────────────────────────────────────────
   async function initUser() {
-    try { await signInAnonymously(auth); } catch (_) {}
+    await signInAnonymously(auth);
 
     const savedGroup = localStorage.getItem('malaga_group');
     const savedUser  = localStorage.getItem('malaga_user');
