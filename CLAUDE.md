@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 index.html          ← koko sovellus (HTML + CSS + JS inline)
 manifest.json       ← PWA-manifest
-sw.js               ← Service worker (network-first), CACHE_NAME tällä hetkellä malaga-2026-v3
+sw.js               ← Service worker (network-first), CACHE_NAME tällä hetkellä malaga-2026-v4
 icons/              ← Ikonit kolmessa koossa (192, 512, maskable), sekä PNG että SVG
 ```
 
