@@ -952,8 +952,6 @@
   const db   = getDatabase(app);
   const auth = getAuth(app);
 
-  try { await signInAnonymously(auth); } catch (_) {}
-
   let currentUser   = null;
   let groupCode     = null;
   let groupMeta     = null;   // { name, admin, createdAt }
@@ -984,6 +982,8 @@
 
   // ── Tunnistus ────────────────────────────────────────
   async function initUser() {
+    try { await signInAnonymously(auth); } catch (_) {}
+
     const savedGroup = localStorage.getItem('malaga_group');
     const savedUser  = localStorage.getItem('malaga_user');
 
