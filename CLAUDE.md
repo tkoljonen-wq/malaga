@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Vanilla JS (ES modules), ei frameworkkeja
 - Firebase Realtime Database (CDN-versio 10.12.2) — käytetään `set`, `push`, `onValue`, `remove`, `get`
+- Firebase Anonymous Auth (CDN 10.12.2) — `signInAnonymously(auth)` kutsutaan `initUser()`-alussa, tietokantasäännöt vaativat `auth != null`
 - Google Fonts: Bebas Neue (otsikot) + Inter (teksti)
 - PWA: manifest.json + sw.js (network-first)
 - Väripaletti (CSS-muuttujat): `--bg: #1a1a2e`, `--surface: #16213e`, `--card: #0f3460`, `--accent: #f0a500`, `--accent-dim: #c98a00`, `--text: #fff`, `--text-muted: #8899bb`, `--positive: #48bb78`, `--negative: #fc8181`, `--border: #1e3a5f`, `--radius: 14px`
@@ -34,6 +35,8 @@ localStorage-avaimet:
 - `malaga_user` — käyttäjänimi
 
 Firebase-konfiguraatio on `index.html` rivillä ~939 (projekti `malaga2026-322ea`, Realtime Database europe-west1). Konfiguraatio on jo asetettu — ei tarvitse vaihtaa.
+
+**Tietoturva:** Anonymous Auth on aktivoitu Firebase Consolessa. Realtime Database -säännöt vaativat `auth != null` kaikille luku/kirjoitusoperaatioille. `signInAnonymously` kutsutaan `initUser()`-funktion alussa — älä siirrä sitä moduulin ylätasolle (DOMContentLoaded ei rekisteröidy ajoissa).
 
 ## Paikallinen kehitys
 
