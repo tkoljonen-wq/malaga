@@ -935,6 +935,8 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getDatabase, ref, set, push, onValue, remove, get }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  import { getAuth, signInAnonymously }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
   const firebaseConfig = {
     apiKey:            "AIzaSyANGrT340D2ePHJPY2tzEcthSnjLqXTbME",
@@ -946,8 +948,11 @@
     appId:             "1:117645941423:web:d1b0bdf56e42abc109d25a"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  await signInAnonymously(auth);
 
   let currentUser   = null;
   let groupCode     = null;

@@ -18,10 +18,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 index.html          ← koko sovellus (HTML + CSS + JS inline)
-manifest.json       ← PWA-manifest (viittaa SVG-ikoneihin)
+manifest.json       ← PWA-manifest
 sw.js               ← Service worker (network-first), CACHE_NAME tällä hetkellä malaga-2026-v3
-icons/              ← SVG-ikonit (192, 512, maskable) — GitHubissa vain SVG, ei PNG
+icons/              ← Ikonit kolmessa koossa (192, 512, maskable), sekä PNG että SVG
 ```
+
+**Huom ikoniformaatti:** Paikallisesti on sekä PNG- että SVG-versiot. `sw.js` ja `index.html` viittaavat tällä hetkellä PNG-tiedostoihin — jos haluat siirtyä pelkkiin SVG-tiedostoihin GitHubissa, päivitä myös nämä viittaukset.
 
 ## Ryhmät ja tunnistus
 
@@ -31,7 +33,7 @@ localStorage-avaimet:
 - `malaga_group` — ryhmäkoodi
 - `malaga_user` — käyttäjänimi
 
-Firebase-konfiguraatio on `index.html` rivillä ~830 (projekti `malaga2026-322ea`, Realtime Database europe-west1). Konfiguraatio on jo asetettu — ei tarvitse vaihtaa.
+Firebase-konfiguraatio on `index.html` rivillä ~939 (projekti `malaga2026-322ea`, Realtime Database europe-west1). Konfiguraatio on jo asetettu — ei tarvitse vaihtaa.
 
 ## Paikallinen kehitys
 
@@ -111,6 +113,6 @@ Kolme modaalia: `modal-settlement`, `modal-confirm`, `modal-log`. `openModal(id)
 
 ## GitHub Pages -käyttöönotto
 
-1. Push kaikki tiedostot GitHubiin (**muista:** GitHubissa on vain SVG-ikonit, ei PNG)
+1. Push kaikki tiedostot GitHubiin (ikonit PNG- tai SVG-muodossa — varmista että `sw.js` ASSETS-lista ja `index.html` viittaavat olemassaoleviin tiedostoihin)
 2. Settings → Pages → Source: `main` branch, `/ (root)`
 3. Sivusto: `https://<käyttäjä>.github.io/<repo>/`
