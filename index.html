@@ -952,7 +952,7 @@
   const db   = getDatabase(app);
   const auth = getAuth(app);
 
-  await signInAnonymously(auth);
+  try { await signInAnonymously(auth); } catch (_) {}
 
   let currentUser   = null;
   let groupCode     = null;
