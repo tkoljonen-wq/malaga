@@ -956,6 +956,7 @@
   let groupMeta     = null;   // { name, admin, createdAt }
   let groupMembers  = [];     // string[]
   let allExpenses   = {};     // { id: expenseObj }
+  let expensesUnsub = null;   // onValue-kuuntelijan purkufunktio
   let pendingDeleteId = null;
   let splitMode     = 'equal'; // 'equal' | 'custom'
   let memberInputs  = ['', '']; // for create-group form
@@ -981,7 +982,11 @@
 
   // ── Tunnistus ────────────────────────────────────────
   async function initUser() {
-    await signInAnonymously(auth);
+    try {
+      await signInAnonymously(auth);
+    } catch (_) {
+      // Offline ilman aiempaa istuntoa: jatketaan, localStorage-fallback hoitaa loput
+    }
 
     const savedGroup = localStorage.getItem('malaga_group');
     const savedUser  = localStorage.getItem('malaga_user');
@@ -1090,9 +1095,6 @@
       <label class="cb-label">
         <input type="checkbox" value="${escHtml(name)}" checked> ${escHtml(name)}
       </label>`).join('');
-    container.addEventListener('change', () => {
-      if (splitMode === 'custom') renderCustomAmounts();
-    });
   }
 
   // ── Relogin-näkymä ───────────────────────────────────
@@ -1134,12 +1136,23 @@
       const unique = [...new Set(members)];
       if (!groupName) { alert('Anna ryhmälle nimi!'); return; }
       if (unique.length < 2) { alert('Lisää väh. kaksi eri jäsentä!'); return; }
+      // Firebase-avaimissa kielletyt merkit — nimiä käytetään customSplit-objektin avaimina
+      const invalidNames = unique.filter(n => /[.#$/\[\]]/.test(n));
+      if (invalidNames.length) {
+        alert('Nimissä ei saa olla merkkejä . # $ / [ ] — korjaa: ' + invalidNames.join(', '));
+        return;
+      }
 
       const btn = document.getElementById('btn-do-create');
       btn.disabled = true;
       btn.textContent = 'Luodaan...';
       try {
-        const code = generateCode();
+        let code = generateCode();
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const existing = await get(ref(db, `groups/${code}/meta`));
+          if (!existing.exists()) break;
+          code = generateCode();
+        }
         const meta = { name: groupName, admin: unique[0], createdAt: Date.now() };
         await set(ref(db, `groups/${code}/meta`), meta);
         await set(ref(db, `groups/${code}/members`), unique);
@@ -1198,8 +1211,9 @@
         groupMembers = members;
       } catch (e) {
         alert('Virhe haettaessa ryhmää. Tarkista verkko.');
+      } finally {
+        btn.disabled = false; btn.textContent = 'HAE RYHMÄ →';
       }
-      btn.disabled = false; btn.textContent = 'HAE RYHMÄ →';
     });
 
     document.getElementById('btn-do-join').addEventListener('click', () => {
@@ -1398,7 +1412,8 @@
 
   // ── Firebase: kuuntele kuluja ─────────────────────────
   function loadExpenses() {
-    onValue(ref(db, `groups/${groupCode}/expenses`), snapshot => {
+    if (expensesUnsub) expensesUnsub();
+    expensesUnsub = onValue(ref(db, `groups/${groupCode}/expenses`), snapshot => {
       allExpenses = snapshot.val() || {};
       renderExpenses();
       renderSummary();
