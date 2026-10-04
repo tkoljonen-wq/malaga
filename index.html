@@ -197,6 +197,24 @@
       color: var(--text);
       text-align: left;
     }
+    .help-content { font-size: 14px; line-height: 1.55; color: var(--text); }
+    .help-content h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px; letter-spacing: 1px; font-weight: 400;
+      color: var(--accent);
+      margin: 18px 0 6px;
+    }
+    .help-content h3:first-child { margin-top: 0; }
+    .help-content p { color: var(--text-muted); margin-bottom: 6px; }
+    .help-content ul { margin: 0 0 6px 20px; color: var(--text-muted); }
+    .help-content li { margin-bottom: 4px; }
+    .help-content b { color: var(--text); }
+    .btn-help-link {
+      background: none; border: none;
+      color: var(--text-muted);
+      font-size: 14px; text-decoration: underline;
+      padding: 12px; margin-top: 8px; cursor: pointer;
+    }
     .ios-install-hint ol { margin: 8px 0 0 20px; color: var(--text-muted); line-height: 1.6; }
     .ios-install-hint b { color: var(--text); }
     .ios-hint-close {
@@ -900,6 +918,8 @@
     <button class="btn btn-ghost" id="btn-relogin-create">+ PERUSTA UUSI RYHMÄ</button>
     <button class="btn btn-ghost btn-return-app" style="display:none;margin-top:10px">← Palaa sovellukseen</button>
   </div>
+
+  <button type="button" class="btn-help-link" onclick="openModal('modal-help')">📖 Käyttöohje</button>
 </div>
 
 <!-- PÄÄSOVELLUS -->
@@ -975,6 +995,10 @@
       <p>Ladataan...</p>
     </div>
     <div class="expenses-list" id="expenses-list" style="display:none;"></div>
+
+    <div style="text-align:center">
+      <button type="button" class="btn-help-link" onclick="openModal('modal-help')">📖 Käyttöohje</button>
+    </div>
   </main>
 
   <!-- Alareuna: loppulaskelma-nappi -->
@@ -1009,6 +1033,76 @@
     <div style="display:flex;gap:10px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-confirm')" style="flex:1">Peruuta</button>
       <button class="btn btn-primary" id="btn-confirm-delete" style="flex:1;background:var(--negative);color:#fff;">Poista</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAALI: Käyttöohje -->
+<div class="modal-overlay" id="modal-help">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📖 KÄYTTÖOHJE</div>
+      <button class="btn-close" onclick="closeModal('modal-help')">✕</button>
+    </div>
+    <div class="help-content">
+      <h3>Mikä tämä on?</h3>
+      <p>Kulujen jako -sovelluksella ryhmä (esim. matkaseurue) kirjaa yhteiset kulut ja näkee lopuksi, kuka maksaa kenelle ja kuinka paljon.</p>
+
+      <h3>1. Asennus puhelimeen</h3>
+      <ul>
+        <li><b>Android (Chrome):</b> paina <b>📲 ASENNA KULUJEN JAKO</b> -painiketta tai Chromen valikosta ⋮ → <b>Asenna sovellus</b>.</li>
+        <li><b>iPhone (Safari):</b> <b>Jaa</b>-painike (neliö ja nuoli ylös) → <b>Lisää Koti-valikkoon</b> → <b>Lisää</b>.</li>
+      </ul>
+      <p>Asennettuna sovellus avautuu omana ikkunanaan ilman osoiteriviä.</p>
+
+      <h3>2. Ryhmän perustaminen</h3>
+      <ul>
+        <li>Valitse <b>+ LUO UUSI RYHMÄ</b>, anna ryhmälle nimi ja lisää kaikki jäsenet (vähintään 2, enintään 10).</li>
+        <li>Ensimmäisenä listalla oleva jäsen on ryhmän <b>ylläpitäjä</b>.</li>
+        <li>Sovellus näyttää 6-merkkisen <b>ryhmäkoodin</b>. Pidä koodia painettuna, niin se kopioituu leikepöydälle, ja jaa se muille esim. viestillä.</li>
+        <li>Valitse lopuksi oma nimesi ja paina <b>ALOITA</b>.</li>
+      </ul>
+      <p>Jäseniä ei voi lisätä tai poistaa jälkikäteen, joten lisää kaikki heti alussa.</p>
+
+      <h3>3. Ryhmään liittyminen</h3>
+      <ul>
+        <li>Valitse <b>LIITY RYHMÄÄN</b>, syötä saamasi koodi ja paina <b>HAE RYHMÄ</b>.</li>
+        <li>Valitse oma nimesi listalta ja paina <b>LIITY</b>.</li>
+        <li>Seuraavalla kerralla ryhmä löytyy <b>Omat ryhmäsi</b> -listalta ilman koodia. Listalta voi poistaa ryhmän 🗑-napilla – ryhmään voi aina liittyä uudelleen koodilla.</li>
+      </ul>
+
+      <h3>4. Kulun lisääminen</h3>
+      <ul>
+        <li>Kirjaa kulu, jonka <b>sinä maksoit</b>. Maksajaksi merkitään aina oma nimesi.</li>
+        <li>Syötä <b>summa</b>, tarvittaessa <b>päivämäärä</b> ja <b>selite</b> (esim. ”Ravintola”).</li>
+        <li><b>Kaikille</b> jakaa kulun koko ryhmälle. <b>Valituille</b> jakaa sen vain rastitetuille henkilöille.</li>
+        <li><b>Tasan</b> jakaa summan tasan. <b>Oma jako</b> antaa syöttää jokaisen osuuden erikseen – osuuksien summan pitää olla sama kuin kulun summa.</li>
+        <li>Paina <b>+ LISÄÄ KULU</b>. Kulu näkyy heti kaikille ryhmän jäsenille.</li>
+      </ul>
+
+      <h3>5. Kulujen seuranta</h3>
+      <ul>
+        <li><b>Maksettu yhteensä</b> näyttää, paljonko kukin on maksanut.</li>
+        <li><b>Kulut</b>-listassa uusimmat ovat ylimpänä.</li>
+        <li>Voit poistaa omat kulusi 🗑-napilla. Ylläpitäjä voi poistaa kenen tahansa kulun. Poistoa ei voi perua. Väärin kirjattu kulu korjataan poistamalla se ja lisäämällä uusi.</li>
+      </ul>
+
+      <h3>6. Loppulaskelma</h3>
+      <p>Paina alareunan <b>🧮 LOPPULASKELMA</b>. Näet jokaisen kokonaiskulut, saldon ja <b>tarvittavat tilisiirrot</b> – mahdollisimman vähillä siirroilla, joilla tilit menevät tasan.</p>
+
+      <h3>7. Yläpalkki</h3>
+      <ul>
+        <li><b>Ryhmän nimi ja koodi:</b> pidä koodia painettuna kopioidaksesi sen.</li>
+        <li><b>🏠 Alkunäyttö:</b> vaihda käyttäjää, vaihda ryhmää tai perusta uusi ryhmä. <b>← Palaa sovellukseen</b> vie takaisin ilman muutoksia.</li>
+        <li><b>📋 Loki</b> (vain ylläpitäjä): kirjautumiset sekä kulujen lisäykset ja poistot – kuka ja milloin.</li>
+      </ul>
+
+      <h3>8. Hyvä tietää</h3>
+      <ul>
+        <li>Tarvitset verkkoyhteyden. Offline-tilassa yläreunassa näkyy ilmoitus, eikä muutoksia tallenneta.</li>
+        <li>Kaikki, joilla on ryhmäkoodi, näkevät ryhmän kulut. Jaa koodi vain ryhmän jäsenille.</li>
+        <li>Älä kirjaa selitteeseen arkaluonteisia henkilötietoja.</li>
+      </ul>
     </div>
   </div>
 </div>
