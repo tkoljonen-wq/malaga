@@ -2,6 +2,7 @@
   "name": "Kulujen jako",
   "short_name": "Kulut",
   "description": "Matkojen yhteisten kulujen jako",
+  "id": "kulujen-jako-v2",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
