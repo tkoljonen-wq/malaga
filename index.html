@@ -282,17 +282,21 @@
       background: var(--accent);
     }
     .btn-change-user {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 11px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 22px;
+      line-height: 1;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 4px;
-      margin-left: 4px;
-      transition: color 0.15s;
+      border-radius: var(--radius-sm);
+      margin-left: 6px;
+      flex-shrink: 0;
+      touch-action: manipulation;
+      transition: border-color 0.15s;
     }
-    .btn-change-user:hover { color: var(--accent); }
+    .btn-change-user:hover, .btn-change-user:active { border-color: var(--accent); }
 
     /* Pääsisältö */
     main {
@@ -842,7 +846,8 @@
       <select id="relogin-name-select"></select>
     </div>
     <button class="btn btn-primary" id="btn-relogin" style="margin-bottom:10px">JATKA 🤙</button>
-    <button class="btn btn-ghost" id="btn-change-group">Vaihda ryhmä</button>
+    <button class="btn btn-ghost" id="btn-change-group" style="margin-bottom:10px">Vaihda ryhmä</button>
+    <button class="btn btn-ghost" id="btn-relogin-create">+ PERUSTA UUSI RYHMÄ</button>
   </div>
 </div>
 
@@ -859,7 +864,7 @@
     <div class="header-user">
       <span class="user-dot"></span>
       <span id="header-username"></span>
-      <button class="btn-change-user" id="btn-change-user" title="Vaihda käyttäjä">✎</button>
+      <button class="btn-change-user" id="btn-change-user" title="Alkunäyttö" aria-label="Siirry alkunäyttöön">🏠</button>
       <button class="btn-log" id="btn-log" title="Loki" onclick="openLog()">📋</button>
     </div>
   </header>
@@ -1302,12 +1307,14 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
   function bindEvents() {
     bindCodeCopy();
     // Valintanäkymä
-    document.getElementById('btn-show-create').addEventListener('click', () => {
+    const showCreate = () => {
       memberInputs = ['', ''];
       renderMemberInputs();
       document.getElementById('input-group-name').value = '';
       showSplash('create');
-    });
+    };
+    document.getElementById('btn-show-create').addEventListener('click', showCreate);
+    document.getElementById('btn-relogin-create').addEventListener('click', showCreate);
     document.getElementById('btn-show-join').addEventListener('click', () => {
       if (loadMyGroups().length) { renderMyGroups(); showSplash('mygroups'); }
       else showJoinCode();
@@ -1321,7 +1328,7 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
       memberInputs.push('');
       renderMemberInputs();
     });
-    document.getElementById('btn-back-create').addEventListener('click', () => showSplash('choice'));
+    document.getElementById('btn-back-create').addEventListener('click', () => showSplash(groupCode && groupMeta ? 'relogin' : 'choice'));
 
     document.getElementById('btn-do-create').addEventListener('click', async () => {
       const groupName = document.getElementById('input-group-name').value.trim();
@@ -1439,11 +1446,12 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
     });
 
     // Vaihda käyttäjä (sovelluksesta)
+    // Alkunäyttö: vaihda käyttäjä, vaihda ryhmä tai perusta uusi. Nykyinen käyttäjä
+    // pysyy esivalittuna, joten "JATKA" palaa suoraan takaisin.
     document.getElementById('btn-change-user').addEventListener('click', () => {
-      if (!confirm('Vaihda käyttäjä?')) return;
-      localStorage.removeItem('malaga_user');
-      currentUser = null;
+      const prev = currentUser;
       populateRelogin();
+      if (prev) document.getElementById('relogin-name-select').value = prev;
       showSplash('relogin');
     });
 
