@@ -18,6 +18,4 @@
   <rect x="280" y="346" width="34" height="56" rx="17" fill="none" stroke="#f0a500" stroke-width="12"/>
   <!-- Foam -->
   <ellipse cx="236" cy="328" rx="44" ry="18" fill="white"/>
-  <!-- Text -->
-  <text x="256" y="476" font-family="Arial Black, sans-serif" font-size="38" font-weight="900" fill="#f0a500" text-anchor="middle">MALAGA</text>
 </svg>
