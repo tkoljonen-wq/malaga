@@ -13,6 +13,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <title>Kulujen jako</title>
+  <script>
+    // Kuunnellaan heti, ettei tapahtuma ehdi laueta ennen moduuliskriptiä
+    window.__installPrompt = null;
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      window.__installPrompt = e;
+      document.dispatchEvent(new Event('installprompt-ready'));
+    });
+    window.addEventListener('appinstalled', () => {
+      window.__installPrompt = null;
+      document.dispatchEvent(new Event('installprompt-ready'));
+    });
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -757,6 +770,7 @@
   <div class="splash-sun">☀️</div>
   <div class="splash-title" id="splash-dynamic-title">KULUJEN JAKO</div>
   <div class="splash-sub">Matkojen yhteiset kulut 🍺</div>
+  <button class="btn btn-primary btn-install" style="display:none;max-width:420px;width:100%;margin-bottom:12px">📲 ASENNA KULUJEN JAKO</button>
 
   <!-- Lataus -->
   <div id="splash-loading" class="splash-card" style="text-align:center;padding:32px 24px">
@@ -875,6 +889,7 @@
   </header>
 
   <main>
+    <button class="btn btn-primary btn-install" style="display:none;margin-bottom:16px">📲 ASENNA KULUJEN JAKO</button>
     <!-- Yhteenveto -->
     <div class="section-title">MAKSETTU YHTEENSÄ</div>
     <div class="summary-grid" id="summary-grid"></div>
@@ -1315,8 +1330,33 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
     hc.textContent = groupCode ? 'KOODI ' + groupCode : '';
   }
 
+  // ── Oma asennuspainike (beforeinstallprompt) ─────────
+  function updateInstallButtons() {
+    const show = !!window.__installPrompt;
+    document.querySelectorAll('.btn-install').forEach(b => { b.style.display = show ? '' : 'none'; });
+  }
+
+  function bindInstallButtons() {
+    document.addEventListener('installprompt-ready', updateInstallButtons);
+    document.querySelectorAll('.btn-install').forEach(b => b.addEventListener('click', async () => {
+      const evt = window.__installPrompt;
+      if (!evt) return;
+      // Tapahtuma on kertakäyttöinen: prompt() voi kutsua vain kerran
+      window.__installPrompt = null;
+      updateInstallButtons();
+      try {
+        await evt.prompt();
+        await evt.userChoice;
+      } catch (_) {
+        alert('Asennusikkunan avaaminen epäonnistui.');
+      }
+    }));
+    updateInstallButtons();
+  }
+
   // ── Tapahtumat ───────────────────────────────────────
   function bindEvents() {
+    bindInstallButtons();
     bindCodeCopy();
     // Valintanäkymä
     const showCreate = () => {

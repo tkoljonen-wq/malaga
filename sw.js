@@ -1,4 +1,7 @@
-const CACHE_NAME = 'malaga-2026-v15';
+// Sama origin (tkoljonen-wq.github.io) on jaettu muiden sovellusten kanssa,
+// joten vanhoja välimuisteja poistetaan vain tämän sovelluksen etuliitteellä.
+const CACHE_PREFIX = 'malaga-2026-';
+const CACHE_NAME = CACHE_PREFIX + 'v16';
 const ASSETS = [
   './',
   './index.html',
@@ -22,7 +25,9 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys
+        .filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME)
+        .map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
