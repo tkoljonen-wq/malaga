@@ -183,6 +183,29 @@
       padding: 10px;
     }
 
+    /* iPhone-asennusohje */
+    .ios-install-hint {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 40px 14px 16px;
+      margin: 0 auto 16px;
+      font-size: 14px;
+      color: var(--text);
+      text-align: left;
+    }
+    .ios-install-hint ol { margin: 8px 0 0 20px; color: var(--text-muted); line-height: 1.6; }
+    .ios-install-hint b { color: var(--text); }
+    .ios-hint-close {
+      position: absolute; top: 4px; right: 4px;
+      width: 36px; height: 36px;
+      background: none; border: none;
+      color: var(--text-muted); font-size: 22px; cursor: pointer;
+    }
+
     /* Ryhmäkoodi-näyttö */
     .group-code-box {
       background: var(--card);
@@ -771,6 +794,15 @@
   <div class="splash-title" id="splash-dynamic-title">KULUJEN JAKO</div>
   <div class="splash-sub">Matkojen yhteiset kulut 🍺</div>
   <button class="btn btn-primary btn-install" style="display:none;max-width:420px;width:100%;margin-bottom:12px">📲 ASENNA KULUJEN JAKO</button>
+  <div class="ios-install-hint" style="display:none">
+    <button type="button" class="ios-hint-close" aria-label="Sulje ohje">×</button>
+    <strong>📲 Asenna iPhoneen</strong>
+    <ol>
+      <li>Avaa tämä sivu Safarissa</li>
+      <li>Paina <b>Jaa</b>-painiketta (neliö ja nuoli ylös)</li>
+      <li>Valitse <b>Lisää Koti-valikkoon</b> → <b>Lisää</b></li>
+    </ol>
+  </div>
 
   <!-- Lataus -->
   <div id="splash-loading" class="splash-card" style="text-align:center;padding:32px 24px">
@@ -890,6 +922,15 @@
 
   <main>
     <button class="btn btn-primary btn-install" style="display:none;margin-bottom:16px">📲 ASENNA KULUJEN JAKO</button>
+    <div class="ios-install-hint" style="display:none">
+      <button type="button" class="ios-hint-close" aria-label="Sulje ohje">×</button>
+      <strong>📲 Asenna iPhoneen</strong>
+      <ol>
+        <li>Avaa tämä sivu Safarissa</li>
+        <li>Paina <b>Jaa</b>-painiketta (neliö ja nuoli ylös)</li>
+        <li>Valitse <b>Lisää Koti-valikkoon</b> → <b>Lisää</b></li>
+      </ol>
+    </div>
     <!-- Yhteenveto -->
     <div class="section-title">MAKSETTU YHTEENSÄ</div>
     <div class="summary-grid" id="summary-grid"></div>
@@ -1336,7 +1377,30 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
     document.querySelectorAll('.btn-install').forEach(b => { b.style.display = show ? '' : 'none'; });
   }
 
+  // iPhone/iPad ei tue beforeinstallprompt-tapahtumaa → näytetään ohje,
+  // ellei sovellus ole jo kotinäytöllä tai käyttäjä ole sulkenut ohjetta
+  const IOS_HINT_KEY = 'kulut_ios_hint_closed';
+  function initIosInstallHint() {
+    const ua = navigator.userAgent;
+    const isIos = /iphone|ipad|ipod/i.test(ua) ||
+      (ua.includes('Macintosh') && navigator.maxTouchPoints > 1);
+    const standalone = navigator.standalone === true ||
+      window.matchMedia('(display-mode: standalone)').matches;
+    let closed = false;
+    try { closed = localStorage.getItem(IOS_HINT_KEY) === '1'; } catch (_) {}
+    const hints = document.querySelectorAll('.ios-install-hint');
+    if (!isIos || standalone || closed) return;
+    hints.forEach(h => {
+      h.style.display = '';
+      h.querySelector('.ios-hint-close').addEventListener('click', () => {
+        try { localStorage.setItem(IOS_HINT_KEY, '1'); } catch (_) {}
+        hints.forEach(x => { x.style.display = 'none'; });
+      });
+    });
+  }
+
   function bindInstallButtons() {
+    initIosInstallHint();
     document.addEventListener('installprompt-ready', updateInstallButtons);
     document.querySelectorAll('.btn-install').forEach(b => b.addEventListener('click', async () => {
       const evt = window.__installPrompt;

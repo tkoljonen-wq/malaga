@@ -1,7 +1,7 @@
 // Sama origin (tkoljonen-wq.github.io) on jaettu muiden sovellusten kanssa,
 // joten vanhoja välimuisteja poistetaan vain tämän sovelluksen etuliitteellä.
 const CACHE_PREFIX = 'malaga-2026-';
-const CACHE_NAME = CACHE_PREFIX + 'v16';
+const CACHE_NAME = CACHE_PREFIX + 'v17';
 const ASSETS = [
   './',
   './index.html',
