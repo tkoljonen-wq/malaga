@@ -185,6 +185,11 @@
       letter-spacing: 10px;
       color: var(--accent);
       line-height: 1;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+      cursor: pointer;
     }
     .group-code-hint {
       font-size: 12px;
@@ -251,6 +256,18 @@
       font-size: 26px;
       letter-spacing: 2px;
       color: var(--accent);
+    }
+    .header-left { min-width: 0; }
+    .header-code {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+      cursor: pointer;
     }
     .header-user {
       font-size: 13px;
@@ -774,7 +791,7 @@
     <p>Jaa tämä koodi kavereille:</p>
     <div class="group-code-box">
       <div class="group-code-value" id="created-code-value"></div>
-      <div class="group-code-hint">Kavereiden täytyy syöttää tämä koodi liittyäkseen</div>
+      <div class="group-code-hint" id="created-code-hint">Pidä koodia painettuna kopioidaksesi sen leikepöydälle</div>
     </div>
     <div class="form-group">
       <label for="created-name-select">Mikä sinun nimesi on?</label>
@@ -835,7 +852,10 @@
   <div id="offline-banner">📵 Offline — muutokset eivät tallennu</div>
 
   <header>
-    <div class="header-title" id="header-group-name"></div>
+    <div class="header-left">
+      <div class="header-title" id="header-group-name"></div>
+      <div class="header-code" id="header-code" title="Pidä painettuna kopioidaksesi koodin"></div>
+    </div>
     <div class="header-user">
       <span class="user-dot"></span>
       <span id="header-username"></span>
@@ -1156,6 +1176,7 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
     document.getElementById('app').style.display    = 'flex';
     document.getElementById('header-username').textContent   = currentUser;
     document.getElementById('header-group-name').textContent = (groupMeta?.name || groupCode) + ' 🌞';
+    updateHeaderCode();
     document.getElementById('btn-log').style.display = isAdmin() ? 'flex' : 'none';
     rememberGroup();
     renderSplitCheckboxes();
@@ -1211,8 +1232,75 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
       groupMembers.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
   }
 
+  // ── Koodin kopiointi pitkällä painalluksella ─────────
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (_) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch (_) { return false; }
+    }
+  }
+
+  // Pitkä painallus (0,5 s) kopioi tekstin; showFeedback(ok) kertoo tuloksen
+  function attachLongPressCopy(el, getText, showFeedback) {
+    let timer = null, startX = 0, startY = 0;
+    const cancel = () => { clearTimeout(timer); timer = null; };
+    el.addEventListener('pointerdown', e => {
+      startX = e.clientX; startY = e.clientY;
+      cancel();
+      timer = setTimeout(async () => {
+        timer = null;
+        const ok = await copyText(getText());
+        if (ok && navigator.vibrate) navigator.vibrate(40);
+        showFeedback(ok);
+      }, 500);
+    });
+    el.addEventListener('pointermove', e => {
+      if (timer && Math.hypot(e.clientX - startX, e.clientY - startY) > 10) cancel();
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => el.addEventListener(t, cancel));
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
+  function bindCodeCopy() {
+    const el   = document.getElementById('created-code-value');
+    const hint = document.getElementById('created-code-hint');
+    const hintDefault = hint.textContent;
+    let resetTimer = null;
+    attachLongPressCopy(el, () => el.textContent.trim(), ok => {
+      hint.textContent = ok ? '✓ Koodi kopioitu leikepöydälle' : 'Kopiointi ei onnistunut';
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => { hint.textContent = hintDefault; }, 2500);
+    });
+
+    const hc = document.getElementById('header-code');
+    let hcTimer = null;
+    attachLongPressCopy(hc, () => groupCode || '', ok => {
+      hc.textContent = ok ? '✓ Kopioitu' : 'Kopiointi epäonnistui';
+      clearTimeout(hcTimer);
+      hcTimer = setTimeout(updateHeaderCode, 1800);
+    });
+  }
+
+  function updateHeaderCode() {
+    const hc = document.getElementById('header-code');
+    hc.textContent = groupCode ? 'KOODI ' + groupCode : '';
+  }
+
   // ── Tapahtumat ───────────────────────────────────────
   function bindEvents() {
+    bindCodeCopy();
     // Valintanäkymä
     document.getElementById('btn-show-create').addEventListener('click', () => {
       memberInputs = ['', ''];

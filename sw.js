@@ -1,4 +1,4 @@
-const CACHE_NAME = 'malaga-2026-v8';
+const CACHE_NAME = 'malaga-2026-v10';
 const ASSETS = [
   './',
   './index.html',
