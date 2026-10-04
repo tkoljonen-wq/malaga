@@ -770,6 +770,7 @@
     <p>Luo uusi ryhmä tai liity olemassa olevaan ryhmään.</p>
     <button class="btn btn-primary" id="btn-show-create" style="margin-bottom:10px">+ LUO UUSI RYHMÄ</button>
     <button class="btn btn-ghost" id="btn-show-join">LIITY RYHMÄÄN</button>
+    <button class="btn btn-ghost btn-return-app" style="display:none;margin-top:10px">← Palaa sovellukseen</button>
   </div>
 
   <!-- Vaihe 2a: Luo ryhmä -->
@@ -787,6 +788,7 @@
     </div>
     <button class="btn btn-primary" id="btn-do-create" style="margin-bottom:10px">LUO RYHMÄ</button>
     <button class="btn btn-ghost" id="btn-back-create">← Takaisin</button>
+    <button class="btn btn-ghost btn-return-app" style="display:none;margin-top:10px">← Palaa sovellukseen</button>
   </div>
 
   <!-- Vaihe 2b: Ryhmä luotu — näytä koodi + valitse oma nimi -->
@@ -813,6 +815,7 @@
     <div id="mygroups-list" style="margin-bottom:14px"></div>
     <button class="btn btn-primary" id="btn-join-new" style="margin-bottom:10px">LIITY UUDELLA KOODILLA</button>
     <button class="btn btn-ghost" id="btn-back-mygroups">← Takaisin</button>
+    <button class="btn btn-ghost btn-return-app" style="display:none;margin-top:10px">← Palaa sovellukseen</button>
   </div>
 
   <!-- Vaihe 3: Liity ryhmään -->
@@ -836,6 +839,7 @@
       <button class="btn btn-primary" id="btn-do-join" style="margin-bottom:10px">LIITY 🤙</button>
     </div>
     <button class="btn btn-ghost" id="btn-back-join">← Takaisin</button>
+    <button class="btn btn-ghost btn-return-app" style="display:none;margin-top:10px">← Palaa sovellukseen</button>
   </div>
 
   <!-- Vaihda käyttäjä (sama ryhmä) -->
@@ -848,6 +852,7 @@
     <button class="btn btn-primary" id="btn-relogin" style="margin-bottom:10px">JATKA 🤙</button>
     <button class="btn btn-ghost" id="btn-change-group" style="margin-bottom:10px">Vaihda ryhmä</button>
     <button class="btn btn-ghost" id="btn-relogin-create">+ PERUSTA UUSI RYHMÄ</button>
+    <button class="btn btn-ghost btn-return-app" style="display:none;margin-top:10px">← Palaa sovellukseen</button>
   </div>
 </div>
 
@@ -1000,8 +1005,14 @@
   window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
 
   // ── Splash navigation ────────────────────────────────
+  // Istunto, johon "Palaa sovellukseen" -napit palauttavat (asetetaan kun alkunäyttöön siirrytään sovelluksesta)
+  let prevSession = null;
+
   function showSplash(state) {
     document.getElementById('splash').style.display = 'flex';
+    document.querySelectorAll('#splash .btn-return-app').forEach(b => {
+      b.style.display = prevSession ? '' : 'none';
+    });
     document.getElementById('app').style.display = 'none';
     ['loading','choice','create','created','join','relogin','mygroups'].forEach(s => {
       document.getElementById('splash-' + s).style.display = s === state ? '' : 'none';
@@ -1177,6 +1188,7 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
   });
 
   function showApp() {
+    prevSession = null;
     document.getElementById('splash').style.display = 'none';
     document.getElementById('app').style.display    = 'flex';
     document.getElementById('header-username').textContent   = currentUser;
@@ -1448,8 +1460,16 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
     // Vaihda käyttäjä (sovelluksesta)
     // Alkunäyttö: vaihda käyttäjä, vaihda ryhmä tai perusta uusi. Nykyinen käyttäjä
     // pysyy esivalittuna, joten "JATKA" palaa suoraan takaisin.
+    document.querySelectorAll('.btn-return-app').forEach(b => b.addEventListener('click', () => {
+      if (!prevSession) return;
+      ({ groupCode, groupMeta, groupMembers, currentUser } = prevSession);
+      localStorage.setItem('malaga_group', groupCode);
+      localStorage.setItem('malaga_user', currentUser);
+      showApp();
+    }));
     document.getElementById('btn-change-user').addEventListener('click', () => {
       const prev = currentUser;
+      prevSession = { groupCode, groupMeta, groupMembers, currentUser };
       populateRelogin();
       if (prev) document.getElementById('relogin-name-select').value = prev;
       showSplash('relogin');
