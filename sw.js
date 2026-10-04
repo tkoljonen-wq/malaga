@@ -1,4 +1,4 @@
-const CACHE_NAME = 'malaga-2026-v14';
+const CACHE_NAME = 'malaga-2026-v15';
 const ASSETS = [
   './',
   './index.html',
@@ -11,7 +11,9 @@ const ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache =>
-      Promise.allSettled(ASSETS.map(url => cache.add(url)))
+      // cache: 'reload' ohittaa HTTP-välimuistin (GitHub Pages: max-age=600),
+      // ettei esicacheen päädy vanhaa kopiota
+      Promise.allSettled(ASSETS.map(url => cache.add(new Request(url, { cache: 'reload' }))))
     )
   );
   self.skipWaiting();
@@ -33,15 +35,33 @@ self.addEventListener('fetch', event => {
       event.request.url.includes('googleapis.com') ||
       event.request.url.includes('gstatic.com')) return;
 
+  const req = event.request;
+  // cache: 'no-cache' = pakollinen tarkistus palvelimelta (ETag). Pelkkä fetch()
+  // palauttaisi HTTP-välimuistista jopa 10 min vanhan kopion ilman verkkopyyntöä,
+  // jolloin "network first" ei oikeasti hakisi tuoretta versiota.
+  const network = req.mode === 'navigate'
+    ? fetch(req.url, { cache: 'no-cache' })
+    : fetch(req, { cache: 'no-cache' });
+
   event.respondWith(
-    fetch(event.request)
+    network
       .then(response => {
-        if (response.ok) {
+        // Vain ehjät vastaukset välimuistiin — virhesivu tai uudelleenohjaus
+        // ei saa korvata toimivaa kopiota
+        if (response.ok && !response.redirected) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
         }
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(async () => {
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        if (req.mode === 'navigate') {
+          const shell = await caches.match('./index.html');
+          if (shell) return shell;
+        }
+        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+      })
   );
 });

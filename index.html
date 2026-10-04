@@ -1859,7 +1859,8 @@ Voit liittyä ryhmään myöhemmin koodilla.`)) return;
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      // updateViaCache: 'none' — sw.js:n päivitystarkistus ohittaa HTTP-välimuistin
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
     });
   }
 </script>
